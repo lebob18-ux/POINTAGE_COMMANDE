@@ -200,6 +200,8 @@ tr.validated .td-article { color: var(--ok); }
 @media (max-width: 700px) {
   .sidebar { width: 200px; }
   .table-wrap { padding: 10px 8px; }
+  /* Masquer N°DM et Ligne sur tablette/mobile */
+  .col-dm, .col-ligne { display: none; }
 }
 @media (max-width: 500px) {
   .app { flex-direction: column; height: auto; min-height: calc(100vh - var(--header-h)); }
