@@ -66,10 +66,17 @@ function renderPanel() {
   const prg  = blProgress(activeBL);
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
 
-  document.getElementById('panelTitle').textContent   = `BL ${activeBL}`;
-  document.getElementById('panelSub').textContent     = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
-  document.getElementById('progBar').style.width      = prg.pct + '%';
-  document.getElementById('progTxt').textContent      = `${prg.done} / ${prg.total}`;
+  document.getElementById('panelTitle').textContent = `BL ${activeBL}`;
+  document.getElementById('panelSub').textContent   = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
+  document.getElementById('progBar').style.width    = prg.pct + '%';
+  document.getElementById('progTxt').textContent    = `${prg.done} / ${prg.total}`;
+
+  /* ── coche tout-sélectionner dans le thead ── */
+  const cbAll = document.getElementById('cbSelectAll');
+  if (cbAll) {
+    cbAll.checked       = prg.done === prg.total && prg.total > 0;
+    cbAll.indeterminate = prg.done > 0 && prg.done < prg.total;
+  }
 
   const tbody = document.getElementById('blTbody');
   tbody.innerHTML = '';
@@ -86,8 +93,8 @@ function renderPanel() {
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
-      <td class="td-dm">${esc(r.dm)}</td>
-      <td>${esc(r.ligne)}</td>
+      <td class="td-dm col-dm">${esc(r.dm)}</td>
+      <td class="col-ligne">${esc(r.ligne)}</td>
       <td class="td-article">${esc(r.article)}</td>
       <td>${esc(r.intitule)}</td>
       <td><span class="qty-badge">${esc(r.quantite)}</span></td>
@@ -99,7 +106,7 @@ function renderPanel() {
     tbody.appendChild(tr);
   });
 
-  /* events inline */
+  /* events lignes */
   tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', e => {
       setCheck(e.target.dataset.key, e.target.checked);
