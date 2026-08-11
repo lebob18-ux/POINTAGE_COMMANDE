@@ -1,0 +1,12 @@
+{
+  "name": "Suivi Commandes SNCF",
+  "short_name": "Suivi Cmd",
+  "description": "Suivi de réception des bons de livraison — SNCF Réseau",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    { "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4e6.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

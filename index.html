@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi Commandes — SNCF Réseau</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f1117">
+</head>
+<body>
+
+<header>
+  <div class="logo">📦 Suivi Commandes <span>SNCF Réseau</span></div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" id="btnReload" title="Recharger la liste depuis GitHub">↺ Actualiser</button>
+  </div>
+</header>
+
+<div id="loadStatus" class="load-status" style="display:none"></div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h2>Bons de livraison</h2>
+      <input class="search-box" type="text" id="searchBL" placeholder="Rechercher BL, DM…">
+      <div class="sidebar-stats" id="sidebarStats"></div>
+    </div>
+    <div class="bl-list" id="blList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Aucun BL sélectionné</div>
+      <div class="empty-sub">Sélectionnez un bon de livraison dans la colonne de gauche.</div>
+    </div>
+    <div class="bl-panel" id="blPanel" style="display:none">
+      <div class="bl-toolbar">
+        <div class="toolbar-info">
+          <div class="bl-title" id="panelTitle"></div>
+          <div class="bl-subtitle" id="panelSub"></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg"><div class="progress-bar" id="progBar"></div></div>
+          <span id="progTxt"></span>
+        </div>
+        <button class="btn btn-sm btn-ok" id="btnValAll">✔ Tout valider</button>
+        <button class="btn btn-sm btn-warn" id="btnShare">↗ Exporter</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="td-check">✔</th>
+              <th>N° DM</th>
+              <th>Ligne</th>
+              <th>Article</th>
+              <th>Intitulé</th>
+              <th>Qté</th>
+              <th class="td-obs">Observation</th>
+            </tr>
+          </thead>
+          <tbody id="blTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-backdrop" id="shareModal" style="display:none">
+  <div class="modal-box modal-sm">
+    <div class="modal-header">
+      <h2>↗ Exporter / Partager</h2>
+      <button class="btn-close" data-close="shareModal">✕</button>
+    </div>
+    <div class="share-options">
+      <div class="share-opt" id="expXlsx">
+        <span class="share-icon">📊</span>
+        <div><div class="share-label">Excel (.xls)</div><div class="share-desc">Statuts + observations, fond vert sur validés</div></div>
+      </div>
+      <div class="share-opt" id="expCsv">
+        <span class="share-icon">📄</span>
+        <div><div class="share-label">CSV</div><div class="share-desc">Séparateur point-virgule, compatible Excel</div></div>
+      </div>
+      <div class="share-opt" id="expPdf">
+        <span class="share-icon">🖨</span>
+        <div><div class="share-label">Imprimer / PDF</div><div class="share-desc">Fiche de réception A4 avec zone de signature</div></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" data-close="shareModal" style="margin-top:4px;width:100%">Fermer</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/import.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
