@@ -22,14 +22,17 @@ document.querySelectorAll('.modal-backdrop').forEach(el =>
 );
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal('shareModal'); });
 
-/* TOUT VALIDER */
-document.getElementById('btnValAll').addEventListener('click', () => {
+/* COCHE TOUT SÉLECTIONNER (thead) */
+document.getElementById('cbSelectAll').addEventListener('change', e => {
   if (!activeBL) return;
-  validateAll(activeBL);
+  const cocher = e.target.checked;
+  getRowsForBL(activeBL).forEach(r => setCheck(rowKey(r), cocher));
   renderPanel();
   renderSidebar();
-  showToast('✔ Toutes les lignes validées');
+  showToast(cocher ? '✔ Toutes les lignes cochées' : 'Toutes les lignes décochées');
 });
+
+
 
 /* EXPORT */
 document.getElementById('btnShare').addEventListener('click', () => openModal('shareModal'));
