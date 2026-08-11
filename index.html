@@ -48,16 +48,17 @@
           <div class="progress-bar-bg"><div class="progress-bar" id="progBar"></div></div>
           <span id="progTxt"></span>
         </div>
-        <button class="btn btn-sm btn-ok" id="btnValAll">✔ Tout valider</button>
         <button class="btn btn-sm btn-warn" id="btnShare">↗ Exporter</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th class="td-check">✔</th>
-              <th>N° DM</th>
-              <th>Ligne</th>
+              <th class="td-check">
+                <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
+              </th>
+              <th class="col-dm">N° DM</th>
+              <th class="col-ligne">Ligne</th>
               <th>Article</th>
               <th>Intitulé</th>
               <th>Qté</th>
