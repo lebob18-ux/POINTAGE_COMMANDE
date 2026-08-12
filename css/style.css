@@ -141,7 +141,8 @@ tbody td { padding: 8px 10px; vertical-align: middle; }
 .td-obs     { min-width: 150px; }
 .td-article { font-family: monospace; font-size: .8rem; color: var(--accent2); }
 .td-dm      { font-weight: 600; }
-.qty-badge  { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-weight: 700; }
+.qty-badge      { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-weight: 700; }
+.chantier-badge { background: #1e2d4d; color: var(--accent2); border-radius: 4px; padding: 2px 8px; font-size: .78rem; font-weight: 600; white-space: nowrap; }
 
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--ok); cursor: pointer; }
 
