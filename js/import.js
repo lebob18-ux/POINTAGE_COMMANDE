@@ -60,11 +60,12 @@ function matchColumn(headers) {
     DM:       ['NDM','DM','NUMDM','NUMERODM'],
     LIGNE:    ['LIGNE','LINE','LIG'],
     BL:       ['NBL','BL','NUMBL'],
+    CHANTIER: ['CHANTIER','SITE','AFFAIRE','OPERATION','OTP'],
     ARTICLE:  ['ARTICLE','ART','CODE','CODEART','REFERENCE','REF'],
     INTITULE: ['INTITULE','LIBELLE','DESIGNATION','DESCRIPTION'],
     QUANTITE: ['QUANTITE','QTE','QTY','QUANTITY'],
   };
-  const idx = { DM:-1, LIGNE:-1, BL:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1 };
+  const idx = { DM:-1, LIGNE:-1, BL:-1, CHANTIER:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1 };
   headers.forEach((h, i) => {
     const norm = normalizeHeader(h);
     Object.keys(idx).forEach(k => {
@@ -88,7 +89,7 @@ function parseCSV(raw) {
     const parts = line.split(sep);
     const bl = get(parts,'BL'), dm = get(parts,'DM');
     if (!bl && !dm) return;
-    rows.push({ dm, ligne: get(parts,'LIGNE'), bl, article: get(parts,'ARTICLE'), intitule: get(parts,'INTITULE'), quantite: get(parts,'QUANTITE') });
+    rows.push({ dm, ligne: get(parts,'LIGNE'), bl, chantier: get(parts,'CHANTIER'), article: get(parts,'ARTICLE'), intitule: get(parts,'INTITULE'), quantite: get(parts,'QUANTITE') });
   });
   return rows.length ? rows : null;
 }
