@@ -17,12 +17,13 @@ function xmlEsc(s) {
 function exportCSV() {
   if (!activeBL) return;
   const rows = getRowsForBL(activeBL);
-  const header = 'N°DM;LIGNE;N°BL;ARTICLE;INTITULE;QUANTITE;VALIDE;OBSERVATION';
+  const header = 'N°DM;LIGNE;N°BL;CHANTIER;ARTICLE;INTITULE;QUANTITE;VALIDE;OBSERVATION';
 
   const lines = rows.map(r => {
     const k = rowKey(r);
     return [
-      r.dm, r.ligne, r.bl, r.article,
+      r.dm, r.ligne, r.bl, r.chantier || '',
+      r.article,
       `"${(r.intitule || '').replace(/"/g, '""')}"`,
       r.quantite,
       state.checks[k] ? 'OUI' : 'NON',
@@ -53,7 +54,7 @@ function exportXLSX() {
       : `<Cell${style ? ` ss:StyleID="${style}"` : ''}><Data ss:Type="Number">${n}</Data></Cell>`;
   };
 
-  const headers = ['N°DM','LIGNE','N°BL','ARTICLE','INTITULÉ','QUANTITÉ','VALIDÉ','OBSERVATION'];
+  const headers = ['N°DM','LIGNE','N°BL','CHANTIER','ARTICLE','INTITULÉ','QUANTITÉ','VALIDÉ','OBSERVATION'];
   let dataRows = `<Row>${headers.map(hcell).join('')}</Row>`;
 
   rows.forEach(r => {
@@ -64,14 +65,15 @@ function exportXLSX() {
     const obs    = state.obs[k] || '';
 
     dataRows += `<Row>
-      ${scell(r.dm,       style)}
-      ${scell(r.ligne,    style)}
-      ${scell(r.bl,       style)}
-      ${scell(r.article,  style)}
-      ${scell(r.intitule, style)}
-      ${ncell(r.quantite, style)}
-      ${scell(valide,     ok ? 'valide' : style)}
-      ${scell(obs,        style)}
+      ${scell(r.dm,            style)}
+      ${scell(r.ligne,         style)}
+      ${scell(r.bl,            style)}
+      ${scell(r.chantier || '', style)}
+      ${scell(r.article,       style)}
+      ${scell(r.intitule,      style)}
+      ${ncell(r.quantite,      style)}
+      ${scell(valide,          ok ? 'valide' : style)}
+      ${scell(obs,             style)}
     </Row>`;
   });
 
@@ -148,6 +150,7 @@ function exportPrint() {
       <td style="text-align:center;font-size:14pt">${ok ? '✔' : '☐'}</td>
       <td>${htmlEsc(r.dm)}</td>
       <td>${htmlEsc(r.ligne)}</td>
+      <td><b>${htmlEsc(r.chantier || '—')}</b></td>
       <td style="font-family:monospace;font-size:9pt">${htmlEsc(r.article)}</td>
       <td>${htmlEsc(r.intitule)}</td>
       <td style="text-align:center;font-weight:700">${htmlEsc(r.quantite)}</td>
@@ -216,6 +219,7 @@ function exportPrint() {
       <th style="width:28px">✔</th>
       <th>N° DM</th>
       <th style="width:36px">Ligne</th>
+      <th>Chantier</th>
       <th>Article</th>
       <th>Intitulé</th>
       <th style="width:36px;text-align:center">Qté</th>

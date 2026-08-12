@@ -95,6 +95,7 @@ function renderPanel() {
       </td>
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
+      <td><span class="chantier-badge">${esc(r.chantier || '—')}</span></td>
       <td class="td-article">${esc(r.article)}</td>
       <td>${esc(r.intitule)}</td>
       <td><span class="qty-badge">${esc(r.quantite)}</span></td>
