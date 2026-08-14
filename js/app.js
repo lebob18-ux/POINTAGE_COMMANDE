@@ -32,93 +32,86 @@ document.getElementById('cbSelectAll').addEventListener('change', e => {
   showToast(cocher ? '✔ Toutes les lignes cochées' : 'Toutes les lignes décochées');
 });
 
-
-
 /* EXPORT */
 document.getElementById('btnShare').addEventListener('click', () => openModal('shareModal'));
 document.getElementById('expCsv').addEventListener('click',  () => { exportCSV();    closeModal('shareModal'); });
 document.getElementById('expXlsx').addEventListener('click', () => { exportXLSX();  closeModal('shareModal'); });
 document.getElementById('expPdf').addEventListener('click',  () => { exportPrint(); });
 
-/* RECHERCHE */
-document.getElementById('searchBL').addEventListener('input', renderSidebar);
+/* UNIQUE BARRE DE RECHERCHE UNIVERSELLE (BL, DM, Article...) */
+const inputSearch = document.getElementById('searchBL');
+if (inputSearch) {
+    // On met à jour le placeholder pour indiquer qu'on peut tout chercher
+    inputSearch.placeholder = "Rechercher BL, DM, Article…";
+    
+    inputSearch.addEventListener('input', (e) => {
+        const terme = e.target.value.toLowerCase().trim();
+        
+        // Si vide, on affiche la liste normale via renderSidebar
+        if (!terme) {
+            renderSidebar();
+            return;
+        }
+
+        // Sinon, on cherche les BL qui matchent soit sur le N° de BL, soit sur un DM, soit sur un Article
+        if (typeof state !== 'undefined' && state.rows) {
+            let blSet = new Set();
+            state.rows.forEach(item => {
+                const matchBl = item.bl && String(item.bl).toLowerCase().includes(terme);
+                const matchDm = item.dm && String(item.dm).toLowerCase().includes(terme);
+                const matchArt = item.article && String(item.article).toLowerCase().includes(terme);
+                const matchIntitule = item.intitule && String(item.intitule).toLowerCase().includes(terme);
+
+                if (matchBl || matchDm || matchArt || matchIntitule) {
+                    blSet.add(item.bl);
+                }
+            });
+            
+            // Affichage dynamique des BL correspondants dans la sidebar
+            const container = document.getElementById('blList');
+            if (container) {
+                container.innerHTML = '';
+                const listeBl = Array.from(blSet);
+                
+                if (listeBl.length === 0) {
+                    container.innerHTML = '<div style="padding: 10px; color: #888; text-align:center;">Aucun résultat</div>';
+                    return;
+                }
+
+                listeBl.forEach(numBl => {
+                    let div = document.createElement('div');
+                    div.className = 'bl-item';
+                    if (activeBL === numBl) div.classList.add('active');
+                    div.textContent = `BL n° ${numBl}`;
+                    div.onclick = () => selectBL(numBl);
+                    container.appendChild(div);
+                });
+            }
+        }
+    });
+}
 
 /* ACTUALISER depuis GitHub */
 document.getElementById('btnReload').addEventListener('click', async () => {
-  const rows = await chargerListeGitHub();
+  await chargerListeGitHub();
   renderSidebar();
-  // Si le BL actif existe encore, on le ré-affiche ; sinon on revient à l'écran vide
   if (activeBL && state.rows.some(r => r.bl === activeBL)) {
     renderPanel();
   } else {
     activeBL = null;
     document.getElementById('blPanel').style.display   = 'none';
     document.getElementById('emptyState').style.display = 'flex';
-    // Sélectionner le premier BL dispo
-    if (state.rows.length) selectBL([...new Set(state.rows.map(r => r.bl))][0]);
   }
 });
-
-/* RECHERCHE GLOBALE PAR ARTICLE */
-const inputSearchArticle = document.getElementById('searchArticle');
-
-if (inputSearchArticle) {
-    inputSearchArticle.addEventListener('input', (e) => {
-        const termeRecherche = e.target.value.toLowerCase().trim();
-        
-        // Si le champ est vide, on réaffiche la liste normale des BL via renderSidebar
-        if (!termeRecherche) {
-            renderSidebar();
-            return;
-        }
-
-        let blTrouves = [];
-        
-        // On parcourt state.rows (qui contient toutes les lignes chargées)
-        if (typeof state !== 'undefined' && state.rows) {
-            let blSet = new Set();
-            state.rows.forEach(item => {
-                // On vérifie l'article ou l'intitulé si besoin
-                if (item.article && String(item.article).toLowerCase().includes(termeRecherche)) {
-                    blSet.add(item.bl);
-                }
-            });
-            blTrouves = Array.from(blSet);
-        }
-
-        // Mettre à jour l'affichage de la liste des BL dans la sidebar avec uniquement les BL trouvés
-        afficherBlFiltresParArticle(blTrouves);
-    });
-}
-
-function afficherBlFiltresParArticle(listeBl) {
-    const container = document.getElementById('blList');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (listeBl.length === 0) {
-        container.innerHTML = '<div class="no-result" style="padding: 10px; color: #888; text-align:center;">Aucun BL trouvé pour cet article</div>';
-        return;
-    }
-
-    // Afficher les BL trouvés dans la liste latérale en utilisant selectBL pour les charger au clic
-    listeBl.forEach(numBl => {
-        let div = document.createElement('div');
-        div.className = 'bl-item'; 
-        div.textContent = `BL n° ${numBl}`;
-        div.onclick = () => selectBL(numBl); 
-        container.appendChild(div);
-    });
-}
 
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 loadState();
 
-// Charger la liste depuis GitHub au démarrage
+// Charger la liste depuis GitHub au démarrage SANS pré-sélectionner de BL
 chargerListeGitHub().then(() => {
   renderSidebar();
-  if (state.rows.length) {
-    selectBL([...new Set(state.rows.map(r => r.bl))][0]);
-  }
+  // On s'assure de rester sur l'écran vide au démarrage
+  activeBL = null;
+  document.getElementById('blPanel').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
 });
