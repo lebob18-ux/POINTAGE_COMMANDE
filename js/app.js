@@ -103,7 +103,13 @@ document.getElementById('btnReload').addEventListener('click', async () => {
     document.getElementById('emptyState').style.display = 'flex';
   }
 });
-
+// Si besoin d'assurer le focus sur mobile lors de la sélection d'un BL
+function selectBLSurMobile(numBl) {
+    selectBL(numBl);
+    if (window.innerWidth <= 768) {
+        document.getElementById('blPanel').scrollIntoView({ behavior: 'smooth' });
+    }
+}
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 loadState();
 
