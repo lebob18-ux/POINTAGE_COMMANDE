@@ -36,7 +36,7 @@ document.getElementById('cbSelectAll').addEventListener('change', e => {
 
 /* EXPORT */
 document.getElementById('btnShare').addEventListener('click', () => openModal('shareModal'));
-document.getElementById('expCsv').addEventListener('click',  () => { exportCSV();   closeModal('shareModal'); });
+document.getElementById('expCsv').addEventListener('click',  () => { exportCSV();    closeModal('shareModal'); });
 document.getElementById('expXlsx').addEventListener('click', () => { exportXLSX();  closeModal('shareModal'); });
 document.getElementById('expPdf').addEventListener('click',  () => { exportPrint(); });
 
@@ -58,31 +58,28 @@ document.getElementById('btnReload').addEventListener('click', async () => {
     if (state.rows.length) selectBL([...new Set(state.rows.map(r => r.bl))][0]);
   }
 });
-// Écouteur sur la recherche globale par article
+
+/* RECHERCHE GLOBALE PAR ARTICLE */
 const inputSearchArticle = document.getElementById('searchArticle');
 
 if (inputSearchArticle) {
     inputSearchArticle.addEventListener('input', (e) => {
         const termeRecherche = e.target.value.toLowerCase().trim();
         
-        // Si le champ est vide, on réaffiche la liste normale des BL
+        // Si le champ est vide, on réaffiche la liste normale des BL via renderSidebar
         if (!termeRecherche) {
-            // Appelez ici votre fonction d'affichage normale des BL (ex: renderBlList())
+            renderSidebar();
             return;
         }
 
-        // Objet ou tableau global contenant vos données chargées (ex: window.allData ou votre state)
-        // On cherche quels BL contiennent cet article
         let blTrouves = [];
         
-        // Supposons que vous avez un accès à vos données globales (ex: un tableau regroupant tous les articles de tous les BL)
-        // On parcourt les données pour trouver les BL correspondants à l'article
-        if (typeof state !== 'undefined' && state.data) {
-            // Adaptez selon la structure de votre objet 'state' ou 'allData'
-            // Exemple : state.data est un tableau d'objets avec { bl, article, intitule, ... }
+        // On parcourt state.rows (qui contient toutes les lignes chargées)
+        if (typeof state !== 'undefined' && state.rows) {
             let blSet = new Set();
-            state.dataforEach(item => {
-                if (item.article && item.article.toLowerCase().includes(termeRecherche)) {
+            state.rows.forEach(item => {
+                // On vérifie l'article ou l'intitulé si besoin
+                if (item.article && String(item.article).toLowerCase().includes(termeRecherche)) {
                     blSet.add(item.bl);
                 }
             });
@@ -101,19 +98,20 @@ function afficherBlFiltresParArticle(listeBl) {
     container.innerHTML = '';
     
     if (listeBl.length === 0) {
-        container.innerHTML = '<div class="no-result" style="padding: 10px; color: #888;">Aucun BL trouvé pour cet article</div>';
+        container.innerHTML = '<div class="no-result" style="padding: 10px; color: #888; text-align:center;">Aucun BL trouvé pour cet article</div>';
         return;
     }
 
-    // Afficher les BL trouvés dans la liste latérale
+    // Afficher les BL trouvés dans la liste latérale en utilisant selectBL pour les charger au clic
     listeBl.forEach(numBl => {
         let div = document.createElement('div');
-        div.className = 'bl-item'; // Utilisez la classe CSS existante pour vos éléments de BL
+        div.className = 'bl-item'; 
         div.textContent = `BL n° ${numBl}`;
-        div.onclick = () => chargerEtAfficherBl(numBl); // Fonction qui charge le BL au clic
+        div.onclick = () => selectBL(numBl); 
         container.appendChild(div);
     });
 }
+
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 loadState();
 
