@@ -58,7 +58,27 @@ document.getElementById('btnReload').addEventListener('click', async () => {
     if (state.rows.length) selectBL([...new Set(state.rows.map(r => r.bl))][0]);
   }
 });
+// Écouteur sur la recherche par article
+const inputSearchArticle = document.getElementById('searchArticle');
+if (inputSearchArticle) {
+    inputSearchArticle.addEventListener('input', (e) => {
+        const terme = e.target.value.toLowerCase().trim();
+        const lignesTableau = document.querySelectorAll('#blTbody tr');
 
+        lignesTableau.forEach(tr => {
+            // Récupère la cellule de l'article (ajustez l'index si besoin, ici l'article est la 5ème colonne du tableau)
+            const tdArticle = tr.querySelectorAll('td')[4]; 
+            if (tdArticle) {
+                const texteArticle = tdArticle.textContent.toLowerCase();
+                if (texteArticle.includes(terme)) {
+                    tr.style.display = '';
+                } else {
+                    tr.style.display = 'none';
+                }
+            }
+        });
+    });
+}
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 loadState();
 
