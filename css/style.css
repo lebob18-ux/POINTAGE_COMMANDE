@@ -210,3 +210,67 @@ tr.validated .td-article { color: var(--ok); }
   .bl-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; }
   .bl-item { min-width: 140px; flex-shrink: 0; }
 }
+/* ── RESPONSIVE SMARTPHONE ─────────────────────────────────────────────── */
+
+@media screen and (max-width: 768px) {
+  /* Organisation générale en colonne unique */
+  body {
+    overflow: auto;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* Sidebar (Liste des BL) occupe tout l'écran ou se réduit si un BL est ouvert */
+  .sidebar {
+    width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #2d3139);
+  }
+
+  /* Panneau principal (Tableau des articles du BL) */
+  .main {
+    width: 100%;
+    flex: 1;
+    padding: 10px;
+  }
+
+  /* Adaptation des boutons et barres de recherche pour le tactile */
+  .search-box {
+    font-size: 16px; /* Empêche le zoom automatique sur iOS */
+    padding: 10px;
+  }
+
+  /* Barre d'outils du BL empilée sur mobile */
+  .bl-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .progress-wrap {
+    width: 100%;
+  }
+
+  /* Tableau scrollable horizontalement sur mobile */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px; /* Force une largeur minimale pour garder les colonnes lisibles */
+  }
+
+  /* Modale d'export en plein écran ou optimisée tactile */
+  .modal-box {
+    width: 95%;
+    max-width: none;
+    margin: 10px;
+  }
+}
