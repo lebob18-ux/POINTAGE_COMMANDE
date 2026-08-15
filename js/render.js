@@ -89,17 +89,17 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
-    // On fusionne Article et Intitulé dans une seule cellule avec des classes dédiées (empilé sur mobile)
+    // On regroupe Article, Intitulé et Chantier dans une seule colonne empilée
     tr.innerHTML = `
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
-      <td><span class="chantier-badge">${esc(r.chantier || '—')}</span></td>
-      <td colspan="2">
-        <span class="cell-article">${esc(r.article)}</span>
-        <span class="cell-intitule">${esc(r.intitule)}</span>
+      <td colspan="3">
+        <div class="cell-article">${esc(r.article)}</div>
+        <div class="cell-intitule">${esc(r.intitule)}</div>
+        <div class="cell-chantier"><span class="chantier-badge">${esc(r.chantier || '—')}</span></div>
       </td>
       <td><span class="qty-badge">${esc(r.quantite)}</span></td>
       <td class="td-obs">
