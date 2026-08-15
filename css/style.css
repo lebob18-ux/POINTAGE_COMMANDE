@@ -1,18 +1,18 @@
 /* ── TOKENS ─────────────────────────────────────────────────────────────── */
 :root {
-  --bg:       #0f1117;
-  --surface:  #1a1d27;
+  --bg:        #0f1117;
+  --surface:   #1a1d27;
   --surface2: #22263a;
-  --border:   #2e3350;
-  --accent:   #3b7cf4;
-  --accent2:  #5e9cf5;
-  --ok:       #2dbe7c;
-  --warn:     #f4a93b;
-  --danger:   #e05252;
-  --text:     #e8eaf0;
-  --muted:    #7a82a0;
-  --radius:   8px;
-  --font:     'Segoe UI', system-ui, sans-serif;
+  --border:    #2e3350;
+  --accent:    #3b7cf4;
+  --accent2:   #5e9cf5;
+  --ok:        #2dbe7c;
+  --warn:      #f4a93b;
+  --danger:    #e05252;
+  --text:      #e8eaf0;
+  --muted:     #7a82a0;
+  --radius:    8px;
+  --font:      'Segoe UI', system-ui, sans-serif;
   --header-h: 53px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -79,7 +79,15 @@ button:active { opacity: .75; }
 .search-box:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .sidebar-stats { font-size: .72rem; color: var(--muted); }
 
-.bl-list { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.bl-list { 
+  overflow-y: auto; 
+  flex: 1; 
+  padding: 8px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px;
+  max-height: 100%;
+}
 .bl-item {
   border-radius: var(--radius); padding: 10px 12px;
   cursor: pointer; border: 1px solid transparent;
@@ -193,27 +201,13 @@ tr.validated .td-article { color: var(--ok); }
 .toast.show { opacity: 1; }
 
 /* ── SCROLLBAR ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar         { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
-@media (max-width: 700px) {
-  .sidebar { width: 200px; }
-  .table-wrap { padding: 10px 8px; }
-  /* Masquer N°DM et Ligne sur tablette/mobile */
-  .col-dm, .col-ligne { display: none; }
-}
-@media (max-width: 500px) {
-  .app { flex-direction: column; height: auto; min-height: calc(100vh - var(--header-h)); }
-  .sidebar { width: 100%; height: 160px; border-right: none; border-bottom: 1px solid var(--border); }
-  .bl-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; }
-  .bl-item { min-width: 140px; flex-shrink: 0; }
-}
-/* ── RESPONSIVE SMARTPHONE ─────────────────────────────────────────────── */
+/* ── RESPONSIVE SMARTPHONE & TABLET ─────────────────────────────────────── */
 
 @media screen and (max-width: 768px) {
-  /* Organisation générale en colonne unique */
   body {
     overflow: auto;
   }
@@ -222,27 +216,38 @@ tr.validated .td-article { color: var(--ok); }
     display: flex;
     flex-direction: column;
     height: auto;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - var(--header-h));
   }
 
-  /* Sidebar (Liste des BL) occupe tout l'écran ou se réduit si un BL est ouvert */
+  /* Sidebar (Liste des BL) avec hauteur flexible et correctif du contenu tronqué */
   .sidebar {
     width: 100%;
-    max-height: 40vh;
+    height: auto;
+    max-height: 42vh;
     border-right: none;
-    border-bottom: 1px solid var(--border-color, #2d3139);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bl-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(42vh - 90px);
+    padding-bottom: 12px; /* Evite que le dernier élément soit collé au bord */
   }
 
   /* Panneau principal (Tableau des articles du BL) */
   .main {
     width: 100%;
     flex: 1;
-    padding: 10px;
+    overflow: visible;
   }
 
-  /* Adaptation des boutons et barres de recherche pour le tactile */
+  /* Adaptation des champs de recherche et boutons pour le tactile */
   .search-box {
-    font-size: 16px; /* Empêche le zoom automatique sur iOS */
+    font-size: 16px; /* Empêche le zoom automatique non désiré sur iOS */
     padding: 10px;
   }
 
@@ -255,19 +260,30 @@ tr.validated .td-article { color: var(--ok); }
 
   .progress-wrap {
     width: 100%;
+    justify-content: space-between;
+  }
+
+  .progress-bar-bg {
+    flex: 1;
   }
 
   /* Tableau scrollable horizontalement sur mobile */
   .table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    padding: 10px 12px;
   }
 
   table {
     min-width: 600px; /* Force une largeur minimale pour garder les colonnes lisibles */
   }
 
-  /* Modale d'export en plein écran ou optimisée tactile */
+  /* Masquer N°DM et Ligne sur mobile pour gagner de la place */
+  .col-dm, .col-ligne { 
+    display: none; 
+  }
+
+  /* Modale d'export optimisée tactile */
   .modal-box {
     width: 95%;
     max-width: none;
