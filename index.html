@@ -53,20 +53,19 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th class="td-check">
-                <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
-              </th>
-              <th class="col-dm">N° DM</th>
-              <th class="col-ligne">Ligne</th>
-              <th>Chantier</th>
-              <th>Article</th>
-              <th>Intitulé</th>
-              <th>Qté</th>
-              <th class="td-obs">Observation</th>
-            </tr>
-          </thead>
+<thead>
+  <tr>
+    <th class="td-check">
+      <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
+    </th>
+    <th class="col-dm">N° DM</th>
+    <th class="col-ligne">Ligne</th>
+    <!-- On fusionne les entêtes ici pour n'en faire qu'une seule -->
+    <th>Article / Intitulé / Chantier</th>
+    <th>Qté</th>
+    <th class="td-obs">Observation</th>
+  </tr>
+</thead>
           <tbody id="blTbody"></tbody>
         </table>
       </div>
