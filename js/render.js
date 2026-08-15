@@ -67,14 +67,14 @@ function renderPanel() {
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
 
   document.getElementById('panelTitle').textContent = `BL ${activeBL}`;
-  document.getElementById('panelSub').textContent   = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
-  document.getElementById('progBar').style.width    = prg.pct + '%';
-  document.getElementById('progTxt').textContent    = `${prg.done} / ${prg.total}`;
+  document.getElementById('panelSub').textContent    = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
+  document.getElementById('progBar').style.width     = prg.pct + '%';
+  document.getElementById('progTxt').textContent     = `${prg.done} / ${prg.total}`;
 
   /* ── coche tout-sélectionner dans le thead ── */
   const cbAll = document.getElementById('cbSelectAll');
   if (cbAll) {
-    cbAll.checked       = prg.done === prg.total && prg.total > 0;
+    cbAll.checked        = prg.done === prg.total && prg.total > 0;
     cbAll.indeterminate = prg.done > 0 && prg.done < prg.total;
   }
 
@@ -89,6 +89,7 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
+    // On fusionne Article et Intitulé dans une seule cellule avec des classes dédiées (empilé sur mobile)
     tr.innerHTML = `
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
@@ -96,14 +97,28 @@ function renderPanel() {
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
       <td><span class="chantier-badge">${esc(r.chantier || '—')}</span></td>
-      <td class="td-article">${esc(r.article)}</td>
-      <td>${esc(r.intitule)}</td>
+      <td colspan="2">
+        <span class="cell-article">${esc(r.article)}</span>
+        <span class="cell-intitule">${esc(r.intitule)}</span>
+      </td>
       <td><span class="qty-badge">${esc(r.quantite)}</span></td>
       <td class="td-obs">
         <input class="obs-input" type="text" placeholder="Observation…"
                data-obskey="${esc(k)}" value="${esc(obsVal)}">
       </td>
     `;
+
+    // ── Rendre toute la ligne cliquable (sauf si on clique sur un input) ──
+    tr.addEventListener('click', e => {
+      if (e.target.tagName.toLowerCase() !== 'input') {
+        const cb = tr.querySelector('input[type=checkbox]');
+        cb.checked = !cb.checked;
+        setCheck(cb.dataset.key, cb.checked);
+        renderPanel();
+        renderSidebar();
+      }
+    });
+
     tbody.appendChild(tr);
   });
 
