@@ -316,7 +316,9 @@ tr.validated .td-article { color: var(--ok); }
     font-style: italic;
   }
 }
-
+.cell-article { font-weight: 700; color: var(--accent2); font-size: 0.85rem; margin-bottom: 2px; }
+.cell-intitule { color: var(--text); font-size: 0.78rem; margin-bottom: 4px; }
+.cell-chantier { margin-top: 2px; }
 /* Rendre toute la ligne cliquable */
 tbody tr {
   cursor: pointer;
