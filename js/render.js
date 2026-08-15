@@ -89,7 +89,7 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
-    // On regroupe Article, Intitulé et Chantier dans une seule colonne empilée
+// On regroupe tout dans une seule cellule avec un colspan de 3
     tr.innerHTML = `
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
