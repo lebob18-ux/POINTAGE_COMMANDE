@@ -290,3 +290,34 @@ tr.validated .td-article { color: var(--ok); }
     margin: 10px;
   }
 }
+/* ── AJOUTS MOBILE : Article et Intitulé empilés ── */
+@media screen and (max-width: 768px) {
+  /* Masquer les colonnes DM et Ligne sur mobile pour libérer de l'espace */
+  .col-dm, .col-ligne {
+    display: none;
+  }
+
+  /* Style empilé pour la cellule article/intitulé */
+  .cell-article-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .cell-article-main {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  
+  .cell-intitule-sub {
+    font-size: 0.73rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+}
+
+/* Rendre toute la ligne cliquable */
+tbody tr {
+  cursor: pointer;
+}
