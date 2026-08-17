@@ -81,7 +81,7 @@ function renderPanel() {
   const tbody = document.getElementById('blTbody');
   tbody.innerHTML = '';
 
-  rows.forEach(r => {
+rows.forEach(r => {
     const k       = rowKey(r);
     const checked = !!state.checks[k];
     const obsVal  = state.obs[k] || '';
@@ -89,26 +89,27 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
-// On regroupe tout dans une seule cellule avec un colspan de 3
     tr.innerHTML = `
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
-      <td colspan="3">
+      <td>
         <div class="cell-article">${esc(r.article)}</div>
         <div class="cell-intitule">${esc(r.intitule)}</div>
-        <div class="cell-chantier"><span class="chantier-badge">${esc(r.chantier || '—')}</span></div>
-      </td>
-      <td><span class="qty-badge">${esc(r.quantite)}</span></td>
-      <td class="td-obs">
-        <input class="obs-input" type="text" placeholder="Observation…"
-               data-obskey="${esc(k)}" value="${esc(obsVal)}">
+        <div class="cell-meta-bas">
+          <span class="chantier-badge">${esc(r.chantier || '—')}</span>
+          <span class="qty-badge">Qté : ${esc(r.quantite)}</span>
+        </div>
+        <div class="cell-obs-wrap">
+          <input class="obs-input" type="text" placeholder="Observation / Remarque..."
+                 data-obskey="${esc(k)}" value="${esc(obsVal)}">
+        </div>
       </td>
     `;
 
-    // ── Rendre toute la ligne cliquable (sauf si on clique sur un input) ──
+    // Clic sur toute la ligne pour cocher/décocher (sauf sur l'input)
     tr.addEventListener('click', e => {
       if (e.target.tagName.toLowerCase() !== 'input') {
         const cb = tr.querySelector('input[type=checkbox]');
@@ -120,6 +121,19 @@ function renderPanel() {
     });
 
     tbody.appendChild(tr);
+  });
+
+  /* events lignes */
+  tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      setCheck(e.target.dataset.key, e.target.checked);
+      renderPanel();
+      renderSidebar();
+    });
+  });
+
+  tbody.querySelectorAll('.obs-input').forEach(inp => {
+    inp.addEventListener('input', e => setObs(e.target.dataset.obskey, e.target.value));
   });
 
   /* events lignes */
