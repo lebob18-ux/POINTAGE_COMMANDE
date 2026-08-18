@@ -155,9 +155,14 @@ tbody td { padding: 8px 10px; vertical-align: middle; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--ok); cursor: pointer; }
 
 .obs-input {
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); border-radius: 5px; padding: 5px 8px;
-  font-size: .8rem; width: 100%; transition: border-color .15s;
+  width: 100%;
+  max-width: 140px; /* Réduit la largeur pour ne pas écraser l'écran sur smartphone */
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
 }
 .obs-input:focus { outline: none; border-color: var(--accent); background: #1e2340; }
 
