@@ -25,8 +25,15 @@
   <aside class="sidebar">
     <div class="sidebar-head">
       <h2>Bons de livraison</h2>
-      <!-- Barre de recherche universelle (BL, DM, Article, Intitulé) -->
-      <input class="search-box" type="text" id="searchBL" placeholder="Rechercher BL, DM, Article…">
+      
+      <!-- Barre de recherche universelle avec conteneur pour la miniature -->
+      <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+        <input class="search-box" type="text" id="searchBL" placeholder="Rechercher BL, DM, Article…" style="flex: 1; margin-bottom: 0;">
+        <div id="searchThumbContainer" style="display: none; flex-shrink: 0;">
+          <img id="searchThumbImg" src="" alt="" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
+        </div>
+      </div>
+
       <div class="sidebar-stats" id="sidebarStats"></div>
     </div>
     <div class="bl-list" id="blList"></div>
@@ -53,16 +60,16 @@
       </div>
       <div class="table-wrap">
         <table>
-<thead>
-  <tr>
-    <th class="td-check">
-      <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
-    </th>
-    <th class="col-dm">N° DM</th>
-    <th class="col-ligne">Ligne</th>
-    <th>Détails de l'article & Réception</th>
-  </tr>
-</thead>
+          <thead>
+            <tr>
+              <th class="td-check">
+                <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
+              </th>
+              <th class="col-dm">N° DM</th>
+              <th class="col-ligne">Ligne</th>
+              <th>Détails de l'article & Réception</th>
+            </tr>
+          </thead>
           <tbody id="blTbody"></tbody>
         </table>
       </div>
