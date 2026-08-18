@@ -1,20 +1,33 @@
-/* ── RENDER ──────────────────────────────────────────────────────────────── */
+/* ── RENDER.JS ───────────────────────────────────────────────────────────── */
 
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ── SIDEBAR ─────────────────────────────────────────────────────────────── */
+/* ── SIDEBAR & RECHERCHE ─────────────────────────────────────────────────── */
 function renderSidebar() {
-  const filter = document.getElementById('searchBL').value.toLowerCase().trim();
+  const searchInput = document.getElementById('searchBL');
+  const filter = searchInput.value.toLowerCase().trim();
   const allBLs = getBLs();
+  
+  // Gestion de la miniature dynamique à côté de la recherche
+  const thumbContainer = document.getElementById('searchThumbContainer');
+  const thumbImg = document.getElementById('searchThumbImg');
+  if (filter.length >= 2) {
+    thumbImg.src = `image/${filter}.jpg`;
+    thumbImg.onerror = () => { thumbContainer.style.display = 'none'; };
+    thumbImg.onload = () => { thumbContainer.style.display = 'block'; };
+  } else {
+    thumbContainer.style.display = 'none';
+  }
+
   const bls = filter
     ? allBLs.filter(b =>
         b.bl.toLowerCase().includes(filter) ||
         [...b.dms].some(d => d.toLowerCase().includes(filter)))
     : allBLs;
 
-  // stats globales
+  // Stats globales
   const total = allBLs.length;
   const done  = allBLs.filter(b => blStatus(b.bl) === 'ok').length;
   document.getElementById('sidebarStats').textContent =
@@ -35,7 +48,6 @@ function renderSidebar() {
 
   bls.forEach(b => {
     const st  = blStatus(b.bl);
-    const prg = blProgress(b.bl);
     const div = document.createElement('div');
     div.className = 'bl-item' + (b.bl === activeBL ? ' active' : '');
     div.innerHTML = `
@@ -51,7 +63,7 @@ function renderSidebar() {
   });
 }
 
-/* ── PANEL ───────────────────────────────────────────────────────────────── */
+/* ── PANEL PRINCIPAL ─────────────────────────────────────────────────────── */
 function selectBL(bl) {
   activeBL = bl;
   document.getElementById('emptyState').style.display = 'none';
@@ -71,7 +83,7 @@ function renderPanel() {
   document.getElementById('progBar').style.width     = prg.pct + '%';
   document.getElementById('progTxt').textContent     = `${prg.done} / ${prg.total}`;
 
-  /* ── coche tout-sélectionner dans le thead ── */
+  /* Coche "tout-sélectionner" dans le thead */
   const cbAll = document.getElementById('cbSelectAll');
   if (cbAll) {
     cbAll.checked        = prg.done === prg.total && prg.total > 0;
@@ -97,7 +109,7 @@ function renderPanel() {
       <td class="col-ligne">${esc(r.ligne)}</td>
       <td>
         <div style="display: flex; align-items: flex-start; gap: 10px;">
-          <!-- Miniature chargée depuis le dossier 'image' sur GitHub -->
+          <!-- Miniature de l'article chargée depuis le dossier 'image' sur GitHub -->
           <img src="image/${esc(r.article)}.jpg" alt="" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.style.display='none'">
           
           <div style="flex: 1; min-width: 0;">
@@ -108,7 +120,7 @@ function renderPanel() {
               <span class="qty-badge">Qté : ${esc(r.quantite)}</span>
             </div>
             <div class="cell-obs-wrap" style="margin-top: 6px;">
-              <input class="obs-input" type="text" placeholder="Observation / Remarque..."
+              <input class="obs-input" type="text" placeholder="Observation..."
                      data-obskey="${esc(k)}" value="${esc(obsVal)}">
             </div>
           </div>
@@ -116,21 +128,20 @@ function renderPanel() {
       </td>
     `;
 
-    // Clic sur toute la ligne pour cocher/décocher (sauf sur l'input)
+    // Clic sur toute la ligne pour cocher/décocher (sauf sur les champs de saisie)
     tr.addEventListener('click', e => {
-      if (e.target.tagName.toLowerCase() !== 'input') {
-        const cb = tr.querySelector('input[type=checkbox]');
-        cb.checked = !cb.checked;
-        setCheck(cb.dataset.key, cb.checked);
-        renderPanel();
-        renderSidebar();
-      }
+      if (['input', 'label'].includes(e.target.tagName.toLowerCase())) return;
+      const cb = tr.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      setCheck(cb.dataset.key, cb.checked);
+      renderPanel();
+      renderSidebar();
     });
 
     tbody.appendChild(tr);
   });
 
-  /* events lignes */
+  /* Événements sur les éléments interactifs de la table */
   tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', e => {
       setCheck(e.target.dataset.key, e.target.checked);
@@ -143,3 +154,13 @@ function renderPanel() {
     inp.addEventListener('input', e => setObs(e.target.dataset.obskey, e.target.value));
   });
 }
+
+// Écouteur global pour la barre de recherche
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('searchBL');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      renderSidebar();
+    });
+  }
+});
