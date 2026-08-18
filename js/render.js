@@ -102,29 +102,39 @@ function renderPanel() {
     if (checked) tr.classList.add('validated');
 
 tr.innerHTML = `
-      <td class="td-check">
-        <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
+      <td class="td-check" style="vertical-align: top; text-align: center;">
+        <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''} style="margin-bottom: 4px;">
+        <div style="font-size: 0.7rem; font-weight: bold; color: var(--muted);">Qté: ${esc(r.quantite)}</div>
       </td>
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
       <td>
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%;">
           
-          <!-- Partie gauche : Texte, infos et observation -->
+          <!-- BLOC TEXTE (Prend toute la largeur disponible restante) -->
           <div style="flex: 1; min-width: 0;">
-            <div class="cell-article">${esc(r.article)}</div>
-            <div class="cell-intitule">${esc(r.intitule)}</div>
-            <div class="cell-meta-bas">
-              <span class="chantier-badge">${esc(r.chantier || '—')}</span>
-              <span class="qty-badge">Qté : ${esc(r.quantite)}</span>
+            
+            <!-- Ligne 1 : Article et Chantier -->
+            <div style="display: flex; justify-content: space-between; gap: 6px; font-size: 0.85rem;">
+              <span class="cell-article" style="font-weight: bold;">${esc(r.article)}</span>
+              <span class="chantier-badge" style="font-size: 0.7rem;">${esc(r.chantier || '—')}</span>
             </div>
-            <div class="cell-obs-wrap" style="margin-top: 6px;">
+
+            <!-- Ligne 2 : Intitulé (revient à la ligne proprement si c'est long) -->
+            <div class="cell-intitule" style="font-size: 0.8rem; margin: 3px 0; word-break: break-word;">
+              ${esc(r.intitule)}
+            </div>
+
+            <!-- Ligne 3 : Champ d'observation compact -->
+            <div class="cell-obs-wrap" style="margin-top: 4px;">
               <input class="obs-input" type="text" placeholder="Observation..."
-                     data-obskey="${esc(k)}" value="${esc(obsVal)}">
+                     data-obskey="${esc(k)}" value="${esc(obsVal)}"
+                     style="width: 100%; font-size: 0.75rem; padding: 4px 6px;">
             </div>
+
           </div>
 
-          <!-- Partie droite : Miniature agrandie sur environ 3 lignes de hauteur -->
+          <!-- BLOC MINIATURE À DROITE (Taille fixe pour ne jamais dépasser de l'écran) -->
           <img src="image/${esc(r.article)}.jpg" alt="" style="width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.style.display='none'">
 
         </div>
