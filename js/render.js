@@ -101,17 +101,16 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
-    tr.innerHTML = `
+tr.innerHTML = `
       <td class="td-check">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
       <td>
-        <div style="display: flex; align-items: flex-start; gap: 10px;">
-          <!-- Miniature de l'article chargée depuis le dossier 'image' sur GitHub -->
-          <img src="image/${esc(r.article)}.jpg" alt="" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.style.display='none'">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
           
+          <!-- Partie gauche : Texte, infos et observation -->
           <div style="flex: 1; min-width: 0;">
             <div class="cell-article">${esc(r.article)}</div>
             <div class="cell-intitule">${esc(r.intitule)}</div>
@@ -124,6 +123,10 @@ function renderPanel() {
                      data-obskey="${esc(k)}" value="${esc(obsVal)}">
             </div>
           </div>
+
+          <!-- Partie droite : Miniature agrandie sur environ 3 lignes de hauteur -->
+          <img src="image/${esc(r.article)}.jpg" alt="" style="width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.style.display='none'">
+
         </div>
       </td>
     `;
