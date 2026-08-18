@@ -81,7 +81,7 @@ function renderPanel() {
   const tbody = document.getElementById('blTbody');
   tbody.innerHTML = '';
 
-rows.forEach(r => {
+  rows.forEach(r => {
     const k       = rowKey(r);
     const checked = !!state.checks[k];
     const obsVal  = state.obs[k] || '';
@@ -96,15 +96,22 @@ rows.forEach(r => {
       <td class="td-dm col-dm">${esc(r.dm)}</td>
       <td class="col-ligne">${esc(r.ligne)}</td>
       <td>
-        <div class="cell-article">${esc(r.article)}</div>
-        <div class="cell-intitule">${esc(r.intitule)}</div>
-        <div class="cell-meta-bas">
-          <span class="chantier-badge">${esc(r.chantier || '—')}</span>
-          <span class="qty-badge">Qté : ${esc(r.quantite)}</span>
-        </div>
-        <div class="cell-obs-wrap">
-          <input class="obs-input" type="text" placeholder="Observation / Remarque..."
-                 data-obskey="${esc(k)}" value="${esc(obsVal)}">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <!-- Miniature chargée depuis le dossier 'image' sur GitHub -->
+          <img src="image/${esc(r.article)}.jpg" alt="" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.style.display='none'">
+          
+          <div style="flex: 1; min-width: 0;">
+            <div class="cell-article">${esc(r.article)}</div>
+            <div class="cell-intitule">${esc(r.intitule)}</div>
+            <div class="cell-meta-bas">
+              <span class="chantier-badge">${esc(r.chantier || '—')}</span>
+              <span class="qty-badge">Qté : ${esc(r.quantite)}</span>
+            </div>
+            <div class="cell-obs-wrap" style="margin-top: 6px;">
+              <input class="obs-input" type="text" placeholder="Observation / Remarque..."
+                     data-obskey="${esc(k)}" value="${esc(obsVal)}">
+            </div>
+          </div>
         </div>
       </td>
     `;
@@ -121,19 +128,6 @@ rows.forEach(r => {
     });
 
     tbody.appendChild(tr);
-  });
-
-  /* events lignes */
-  tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', e => {
-      setCheck(e.target.dataset.key, e.target.checked);
-      renderPanel();
-      renderSidebar();
-    });
-  });
-
-  tbody.querySelectorAll('.obs-input').forEach(inp => {
-    inp.addEventListener('input', e => setObs(e.target.dataset.obskey, e.target.value));
   });
 
   /* events lignes */
