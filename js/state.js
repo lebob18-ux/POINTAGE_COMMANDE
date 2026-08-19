@@ -1,10 +1,10 @@
 /* ── STATE ──────────────────────────────────────────────────────────────────
-   rows    : [{dm, ligne, bl, article, intitule, quantite}]
-   checks  : { "bl|dm|ligne|article": true }
-   obs     : { "bl|dm|ligne|article": "texte observation" }
-   activeBL: string | null
+   rows     : [{dm, ligne, bl, article, intitule, quantite, ee}]
+   checks   : { "bl|dm|ligne|article": true }
+   obs      : { "bl|dm|ligne|article": "texte observation" }
+   activeBL : string | null
 ──────────────────────────────────────────────────────────────────────────── */
-const STORE_KEY = 'fbm_suivi_v2';
+const STORE_KEY = 'fbm_suivi_v3';
 
 const state = {
   rows: [],
@@ -13,6 +13,18 @@ const state = {
 };
 
 let activeBL = null;
+
+// Gestion de l'entreprise active (stockée en majuscules pour éviter les bugs)
+let currentCompany = (localStorage.getItem('sncf_company') || '').toUpperCase().trim();
+
+function isAdmin() {
+  return currentCompany === 'SNCF';
+}
+
+function setCompany(name) {
+  currentCompany = name.toUpperCase().trim();
+  localStorage.setItem('sncf_company', currentCompany);
+}
 
 /* ── PERSISTENCE ─────────────────────────────────────────────────────────── */
 function saveState() {
@@ -45,9 +57,16 @@ function rowKey(r) {
   return `${r.bl}|${r.dm}|${r.ligne}|${r.article}`;
 }
 
+// Récupère uniquement les lignes autorisées pour l'utilisateur connecté
+function getAuthorizedRows() {
+  if (isAdmin()) return state.rows;
+  return state.rows.filter(r => (r.ee || '').trim().toUpperCase() === currentCompany);
+}
+
 function getBLs() {
   const map = {};
-  state.rows.forEach(r => {
+  // On se base sur les lignes autorisées pour alimenter la sidebar
+  getAuthorizedRows().forEach(r => {
     if (!map[r.bl]) map[r.bl] = { bl: r.bl, dms: new Set(), count: 0 };
     map[r.bl].dms.add(r.dm);
     map[r.bl].count++;
@@ -56,7 +75,9 @@ function getBLs() {
 }
 
 function getRowsForBL(bl) {
-  return state.rows.filter(r => r.bl === bl);
+  const rows = state.rows.filter(r => r.bl === bl);
+  if (isAdmin()) return rows;
+  return rows.filter(r => (r.ee || '').trim().toUpperCase() === currentCompany);
 }
 
 function blStatus(bl) {
@@ -106,3 +127,26 @@ function addRows(rows) {
   state.rows.push(...rows);
   saveState();
 }
+
+/* ── INITIALISATION POPUP ENTREPRISE ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+
+  if (!currentCompany) {
+    const modal = document.getElementById('companyModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  const saveBtn = document.getElementById('btnSaveCompany');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const input = document.getElementById('inputCompanyName');
+      if (input && input.value.trim()) {
+        setCompany(input.value);
+        const modal = document.getElementById('companyModal');
+        if (modal) modal.style.display = 'none';
+        location.reload(); // Recharge pour appliquer l'accès global ou filtré
+      }
+    });
+  }
+});
