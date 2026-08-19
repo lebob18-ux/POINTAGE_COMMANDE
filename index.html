@@ -60,17 +60,19 @@
       </div>
       <div class="table-wrap">
       <table>
-          <thead>
-            <tr>
-              <th class="td-check" style="width: 35px; text-align: center;">
-                <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
-              </th>
-              <th style="width: 55px; text-align: center; font-size: 0.75rem;">Photo</th>
-              <th class="col-dm" style="width: 60px; font-size: 0.75rem;">N° DM</th>
-              <th class="col-ligne" style="width: 45px; font-size: 0.75rem;">Ligne</th>
-              <th style="font-size: 0.75rem; text-align: left; padding-left: 8px;">Détails de l'article & Réception</th>
-            </tr>
-          </thead>
+<!-- À mettre dans le <thead> de votre tableau -->
+<thead>
+  <tr>
+    <th class="td-check" style="width: 35px; text-align: center;">
+      <input type="checkbox" id="cbSelectAll" title="Tout cocher / décocher">
+    </th>
+    <th style="width: 55px; text-align: center; font-size: 0.75rem;">Photo</th>
+    <th class="col-dm" style="width: 60px; font-size: 0.75rem;">N° DM</th>
+    <th class="col-ligne" style="width: 45px; font-size: 0.75rem;">Ligne</th>
+    <th style="width: 45px; text-align: center; font-size: 0.75rem;">EE</th>
+    <th style="font-size: 0.75rem; text-align: left; padding-left: 8px;">Détails de l'article & Réception</th>
+  </tr>
+</thead>
           <tbody id="blTbody"></tbody>
         </table>
       </div>
@@ -104,7 +106,22 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
+<!-- POPUP CONFIGURATION ENTREPRISE -->
+<div class="modal-backdrop" id="companyModal" style="display:none; z-index: 9999;">
+  <div class="modal-box modal-sm" style="text-align: center;">
+    <div class="modal-header" style="justify-content: center;">
+      <h2>🔧 Configuration Profil</h2>
+    </div>
+    <div style="margin: 15px 0; font-size: 0.85rem; color: var(--muted);">
+      Veuillez indiquer votre nom d'entreprise ou tapez <b style="color: var(--text);">SNCF</b> pour un accès global (Admin).
+    </div>
+    <div style="margin-bottom: 15px;">
+      <input type="text" id="inputCompanyName" placeholder="ex: SNCF, ETF, COLAS..." 
+             style="width: 100%; padding: 8px; font-size: 0.9rem; text-align: center; text-transform: uppercase; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius);">
+    </div>
+    <button class="btn btn-sm btn-warn" id="btnSaveCompany" style="width: 100%; padding: 10px;">Valider et démarrer</button>
+  </div>
+</div>
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/import.js"></script>
