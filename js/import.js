@@ -52,7 +52,9 @@ function detectSeparator(line) {
 }
 
 function normalizeHeader(h) {
-  return h.trim().toUpperCase().replace(/[°\s\-_]/g, '');
+  return h.trim().toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Supprime les accents (ex: Réception -> RECEPTION)
+    .replace(/[°\s\-_]/g, '');
 }
 
 function matchColumn(headers) {
@@ -64,17 +66,19 @@ function matchColumn(headers) {
     ARTICLE:  ['ARTICLE','ART','CODE','CODEART','REFERENCE','REF'],
     INTITULE: ['INTITULE','LIBELLE','DESIGNATION','DESCRIPTION'],
     QUANTITE: ['QUANTITE','QTE','QTY','QUANTITY'],
+    EE:       ['EE','ENTREPRISE','STE','SOCIETE'],
+    RECEPTION:['RECEPTION','STATUTRECEPTION','REC','VALIDE'],
   };
-  const idx = { DM:-1, LIGNE:-1, BL:-1, CHANTIER:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1 };
+  const idx = { DM:-1, LIGNE:-1, BL:-1, CHANTIER:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1, EE:-1, RECEPTION:-1 };
+  
   headers.forEach((h, i) => {
     const norm = normalizeHeader(h);
     Object.keys(idx).forEach(k => {
       if (idx[k] === -1 && ALIASES[k].some(a => norm.includes(a) || a.includes(norm))) idx[k] = i;
     });
   });
-  // fallback positionnel
-  if (Object.values(idx).filter(v => v === -1).length > 3)
-    ['DM','LIGNE','BL','ARTICLE','INTITULE','QUANTITE'].forEach((k, i) => { idx[k] = i; });
+  
+  // fallback positionnel si besoin
   return idx;
 }
 
@@ -83,13 +87,25 @@ function parseCSV(raw) {
   if (lines.length < 2) return null;
   const sep  = detectSeparator(lines[0]);
   const idx  = matchColumn(lines[0].split(sep));
-  const get  = (parts, k) => (parts[idx[k]] || '').trim().replace(/^["']|["']$/g, '');
+  const get  = (parts, k) => (idx[k] !== -1 && parts[idx[k]] ? parts[idx[k]].trim().replace(/^["']|["']$/g, '') : '');
+  
   const rows = [];
   lines.slice(1).forEach(line => {
     const parts = line.split(sep);
     const bl = get(parts,'BL'), dm = get(parts,'DM');
     if (!bl && !dm) return;
-    rows.push({ dm, ligne: get(parts,'LIGNE'), bl, chantier: get(parts,'CHANTIER'), article: get(parts,'ARTICLE'), intitule: get(parts,'INTITULE'), quantite: get(parts,'QUANTITE') });
+    
+    rows.push({ 
+      dm, 
+      ligne: get(parts,'LIGNE'), 
+      bl, 
+      chantier: get(parts,'CHANTIER'), 
+      article: get(parts,'ARTICLE'), 
+      intitule: get(parts,'INTITULE'), 
+      quantite: get(parts,'QUANTITE'),
+      ee: get(parts,'EE').toUpperCase(), // Forcé en majuscules pour les filtres
+      reception: get(parts,'RECEPTION')
+    });
   });
   return rows.length ? rows : null;
 }
