@@ -65,13 +65,19 @@ function getAuthorizedRows() {
 
 function getBLs() {
   const map = {};
-  // On se base sur les lignes autorisées pour alimenter la sidebar
+  // On se base sur les lignes autorisées
   getAuthorizedRows().forEach(r => {
     if (!map[r.bl]) map[r.bl] = { bl: r.bl, dms: new Set(), count: 0 };
     map[r.bl].dms.add(r.dm);
     map[r.bl].count++;
   });
-  return Object.values(map);
+
+  // On transforme l'objet en tableau
+  const list = Object.values(map);
+
+  // FILTRE : On ne garde que les BL qui ne sont PAS complètement validés ('ok')
+  // (Si vous souhaitez tout de même revoir les terminés, on pourra ajouter un bouton bascule un de ces jours)
+  return list.filter(b => blStatus(b.bl) !== 'ok');
 }
 
 function getRowsForBL(bl) {
