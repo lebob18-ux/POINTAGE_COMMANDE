@@ -18,7 +18,7 @@ function renderSidebar() {
     thumbImg.onerror = () => { thumbContainer.style.display = 'none'; };
     thumbImg.onload = () => { thumbContainer.style.display = 'block'; };
   } else {
-    thumbContainer.style.display = 'none';
+    if (thumbContainer) thumbContainer.style.display = 'none';
   }
 
   const bls = filter
@@ -30,10 +30,13 @@ function renderSidebar() {
   // Stats globales
   const total = allBLs.length;
   const done  = allBLs.filter(b => blStatus(b.bl) === 'ok').length;
-  document.getElementById('sidebarStats').textContent =
-    total ? `${done}/${total} BL complet${done > 1 ? 's' : ''}` : '';
+  const statsEl = document.getElementById('sidebarStats');
+  if (statsEl) {
+    statsEl.textContent = total ? `${done}/${total} BL complet${done > 1 ? 's' : ''}` : '';
+  }
 
   const list = document.getElementById('blList');
+  if (!list) return;
   list.innerHTML = '';
 
   if (!bls.length) {
@@ -66,8 +69,10 @@ function renderSidebar() {
 /* ── PANEL PRINCIPAL ─────────────────────────────────────────────────────── */
 function selectBL(bl) {
   activeBL = bl;
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('blPanel').style.display = 'flex';
+  const emptyState = document.getElementById('emptyState');
+  const blPanel = document.getElementById('blPanel');
+  if (emptyState) emptyState.style.display = 'none';
+  if (blPanel) blPanel.style.display = 'flex';
   renderPanel();
   renderSidebar();
 }
@@ -78,10 +83,15 @@ function renderPanel() {
   const prg  = blProgress(activeBL);
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
 
-  document.getElementById('panelTitle').textContent = `BL ${activeBL}`;
-  document.getElementById('panelSub').textContent    = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
-  document.getElementById('progBar').style.width     = prg.pct + '%';
-  document.getElementById('progTxt').textContent     = `${prg.done} / ${prg.total}`;
+  const panelTitle = document.getElementById('panelTitle');
+  const panelSub = document.getElementById('panelSub');
+  const progBar = document.getElementById('progBar');
+  const progTxt = document.getElementById('progTxt');
+
+  if (panelTitle) panelTitle.textContent = `BL ${activeBL}`;
+  if (panelSub) panelSub.textContent    = `DM : ${dms} — ${rows.length} article${rows.length > 1 ? 's' : ''}`;
+  if (progBar) progBar.style.width      = prg.pct + '%';
+  if (progTxt) progTxt.textContent      = `${prg.done} / ${prg.total}`;
 
   /* Coche "tout-sélectionner" dans le thead */
   const cbAll = document.getElementById('cbSelectAll');
@@ -91,6 +101,7 @@ function renderPanel() {
   }
 
   const tbody = document.getElementById('blTbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   rows.forEach(r => {
@@ -101,12 +112,12 @@ function renderPanel() {
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
 
-tr.innerHTML = `
-      <td class="td-check" style="vertical-align: middle; text-align: center; width: 30px; padding: 4px 2px;">
+    tr.innerHTML = `
+      <td class="td-check" style="vertical-align: middle; text-align: center; width: 35px; padding: 4px 2px;">
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DIRECTEMENT À GAUCHE (entre la coche et le reste) -->
+      <!-- MINIATURE DIRECTEMENT À GAUCHE -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
         <img src="image/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
@@ -115,6 +126,11 @@ tr.innerHTML = `
       <td class="td-dm col-dm" style="font-size: 0.7rem; padding: 4px 2px; word-break: break-all;">${esc(r.dm)}</td>
       <td class="col-ligne" style="font-size: 0.7rem; padding: 4px 2px;">${esc(r.ligne)}</td>
       
+      <!-- COLONNE EE (Entreprise) -->
+      <td style="text-align: center; font-size: 0.7rem; font-weight: bold; color: var(--warn); padding: 4px 2px;">
+        ${esc(r.ee || '—')}
+      </td>
+
       <td style="padding: 4px 4px;">
         <div style="width: 100%; box-sizing: border-box;">
           
@@ -124,7 +140,7 @@ tr.innerHTML = `
             <span class="chantier-badge" style="font-size: 0.65rem; background: var(--surface2); padding: 1px 4px; border-radius: 3px;">${esc(r.chantier || '—')}</span>
           </div>
 
-          <!-- Ligne 2 : Intitulé complet sur toute la largeur restante -->
+          <!-- Ligne 2 : Intitulé complet -->
           <div class="cell-intitule" style="font-size: 0.75rem; margin-bottom: 4px; word-break: break-word; line-height: 1.2;">
             ${esc(r.intitule)}
           </div>
@@ -144,10 +160,12 @@ tr.innerHTML = `
     tr.addEventListener('click', e => {
       if (['input', 'label'].includes(e.target.tagName.toLowerCase())) return;
       const cb = tr.querySelector('input[type=checkbox]');
-      cb.checked = !cb.checked;
-      setCheck(cb.dataset.key, cb.checked);
-      renderPanel();
-      renderSidebar();
+      if (cb) {
+        cb.checked = !cb.checked;
+        setCheck(cb.dataset.key, cb.checked);
+        renderPanel();
+        renderSidebar();
+      }
     });
 
     tbody.appendChild(tr);
