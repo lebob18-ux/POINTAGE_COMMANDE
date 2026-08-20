@@ -9,7 +9,17 @@
   <meta name="theme-color" content="#0f1117">
 </head>
 <body>
+  
+<!-- Bouton admin caché par défaut -->
+<button id="adminTabButton" style="display:none;" onclick="switchTab('admin')">Admin SNCF</button>
 
+<!-- Zone admin -->
+<div id="tab-admin" class="tab-content" style="display:none;">
+    <input type="text" id="searchPelican" placeholder="Rechercher...">
+    <button onclick="renderPelican()">Rechercher</button>
+    <div id="pelicanResults"></div>
+</div>
+  
 <header>
   <div class="logo">📦 Suivi Commandes <span>SNCF Réseau</span></div>
   <div class="header-actions">
@@ -122,6 +132,11 @@
     <button class="btn btn-sm btn-warn" id="btnSaveCompany" style="width: 100%; padding: 10px;">Valider et démarrer</button>
   </div>
 </div>
+  
+<script src="auth.js"></script>
+<script src="ui.js"></script>
+<script src="pelican.js"></script>
+  
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/import.js"></script>
