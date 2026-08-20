@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <!-- Librairie SheetJS pour lire Excel et CSV côté client -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suivi Commandes — SNCF Réseau</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f1117">
+  
+  <!-- Librairie SheetJS pour lire Excel (.xlsx, .xlsm, .xls) et CSV côté client -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -19,7 +19,8 @@
   <!-- Navigation par onglets -->
   <div class="nav-tabs" style="display: flex; gap: 10px; margin-left: 20px;">
     <button class="btn btn-sm btn-ghost active" onclick="switchTab('commandes')">Suivi BL</button>
-    <button class="btn btn-sm btn-warn" onclick="checkSNCF()" id="adminTabButton" style="display:none;">🔍 Admin PELICAN</button>
+    <!-- Bouton admin caché par défaut, s'affiche si authentifié SNCF -->
+    <button class="btn btn-sm btn-warn" onclick="checkSNCF()" id="adminTabButton" style="display:none;">🔍 Import & Liste</button>
   </div>
 
   <div class="header-actions">
@@ -86,33 +87,32 @@
   </div>
 </div>
 
-  <!-- ================= 2. ONGLET ADMIN PELICAN & IMPORT LIBRE ================= -->
+<!-- ================= 2. ONGLET IMPORT & LISTE PERSONNALISÉE ================= -->
 <div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 900px; margin: 0 auto;">
-  <h2>🔍 Recherche & Importation Libre</h2>
+  <h2>📁 Importation & Affichage de Liste Personnalisée</h2>
   
-  <!-- Zone d'import de fichier externe -->
+  <!-- Zone de sélection de fichier -->
   <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
     <div>
-      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Importer une liste externe</div>
+      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Charger un fichier externe</div>
       <div style="font-size: 0.75rem; color: var(--muted);">Formats acceptés : CSV, TXT (séparateur ;), XLS, XLSX, XLSM</div>
     </div>
     <div>
       <input type="file" id="importCustomFile" accept=".csv, .txt, .xls, .xlsx, .xlsm" style="display: none;" onchange="handleCustomFileImport(event)">
-      <button class="btn btn-sm btn-ghost" onclick="document.getElementById('importCustomFile').click()">📁 Choisir un fichier</button>
+      <button class="btn btn-sm btn-warn" onclick="document.getElementById('importCustomFile').click()">📂 Choisir un fichier</button>
     </div>
   </div>
 
-  <!-- Barre de recherche -->
-  <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-    <input type="text" id="searchPelican" placeholder="Tapez un symbole, un libellé ou un terme de la liste importée..." style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
-    <button class="btn btn-warn" onclick="renderPelican()" style="padding: 10px 20px;">Rechercher</button>
+  <!-- Barre de recherche / filtrage de la liste importée -->
+  <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+    <input type="text" id="searchPelican" placeholder="Filtrer par symbole, numéro ou intitulé..." oninput="renderCustomList()" style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
   </div>
 
-  <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;"></div>
+  <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 15px;"></div>
+  
+  <!-- Conteneur des résultats de la liste -->
   <div id="pelicanResults" style="display: flex; flex-direction: column; gap: 8px;"></div>
 </div>
-<!-- ================= 2. ONGLET ADMIN PELICAN ================= -->
-
 
 <!-- EXPORT MODAL -->
 <div class="modal-backdrop" id="shareModal" style="display:none">
@@ -158,24 +158,27 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- CHARGEMENT DE TOUS LES SCRIPTS SÉPARÉS -->
+<!-- CHARGEMENT DE VOS SCRIPTS (AVEC VOTRE NOUVEAU IMPORT_CUSTOM.JS) -->
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/pelican.js"></script>
+<script src="js/import_custom.js"></script>
+
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/import.js"></script>
 <script src="js/export.js"></script>
 <script src="js/app.js"></script>
 
-<!-- Script pour intercepter le choix "SNCF" dans votre pop-up d'entreprise d'origine -->
+<!-- Script pour intercepter le choix "SNCF" dans le pop-up d'entreprise -->
 <script>
 document.getElementById('btnSaveCompany').addEventListener('click', () => {
     const val = document.getElementById('inputCompanyName').value.trim().toUpperCase();
     if (val === 'SNCF') {
-        // Si l'utilisateur tape SNCF, on ferme le pop-up d'entreprise et on lance le contrôle N°CP
         document.getElementById('companyModal').style.display = 'none';
         checkSNCF();
+    } else if (val) {
+        localStorage.setItem('user_company', val);
+        document.getElementById('companyModal').style.display = 'none';
     }
 });
 </script>
