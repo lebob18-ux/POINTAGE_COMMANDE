@@ -13,6 +13,7 @@
 </head>
 <body>
 
+<!-- ================= DÉBUT HEADER / NAVIGATION ================= -->
 <header>
   <div class="logo">📦 Suivi Commandes <span>SNCF Réseau</span></div>
   
@@ -27,10 +28,11 @@
     <button class="btn btn-ghost btn-sm" id="btnReload" title="Recharger la liste depuis GitHub">↺ Actualiser</button>
   </div>
 </header>
+<!-- ================= FIN HEADER / NAVIGATION ================= -->
 
 <div id="loadStatus" class="load-status" style="display:none"></div>
 
-<!-- ================= 1. ONGLET SUIVI COMMANDES ================= -->
+<!-- ================= DÉBUT ONGLET 1 : SUIVI COMMANDES (BL) ================= -->
 <div id="tab-commandes" class="tab-content" style="display:block;">
   <div class="app">
     <aside class="sidebar">
@@ -86,16 +88,17 @@
     </main>
   </div>
 </div>
+<!-- ================= FIN ONGLET 1 : SUIVI COMMANDES (BL) ================= -->
 
-<!-- ================= 2. ONGLET IMPORT & LISTE PERSONNALISÉE ================= -->
-<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 900px; margin: 0 auto;">
-  <h2>📁 Importation & Affichage de Liste Personnalisée</h2>
+<!-- ================= DÉBUT ONGLET 2 : IMPORT & SUIVI TERRAIN (CUSTOM) ================= -->
+<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 1100px; margin: 0 auto;">
+  <h2>📋 Suivi & Validation - Liste Importée</h2>
   
   <!-- Zone de sélection de fichier -->
-  <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+  <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
     <div>
-      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Charger un fichier externe</div>
-      <div style="font-size: 0.75rem; color: var(--muted);">Formats acceptés : CSV, TXT (séparateur ;), XLS, XLSX, XLSM</div>
+      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Importer un nouveau fichier de suivi</div>
+      <div style="font-size: 0.75rem; color: var(--muted);">Formats : CSV, TXT (séparateur ;), XLS, XLSX, XLSM</div>
     </div>
     <div>
       <input type="file" id="importCustomFile" accept=".csv, .txt, .xls, .xlsx, .xlsm" style="display: none;" onchange="handleCustomFileImport(event)">
@@ -103,17 +106,51 @@
     </div>
   </div>
 
-  <!-- Barre de recherche / filtrage de la liste importée -->
-  <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-    <input type="text" id="searchPelican" placeholder="Filtrer par symbole, numéro ou intitulé..." oninput="renderCustomList()" style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+  <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;"></div>
+
+  <!-- Barre d'outils du tableau (masquée tant qu'aucun fichier n'est chargé) -->
+  <div id="customToolbar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; flex-wrap: wrap;">
+    <input type="text" id="searchPelican" placeholder="Filtrer dans la liste..." oninput="renderCustomList()" style="flex-grow: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+    
+    <!-- Barre de progression -->
+    <div style="display: flex; align-items: center; gap: 10px; background: var(--surface2); padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border);">
+      <div style="width: 100px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+        <div id="customProgBar" style="width: 0%; height: 100%; background: #28a745; transition: width 0.3s;"></div>
+      </div>
+      <span id="customProgTxt" style="font-size: 0.75rem; font-weight: bold;">0 / 0 (0%)</span>
+    </div>
+
+    <!-- Boutons d'export -->
+    <div style="display: flex; gap: 6px;">
+      <button class="btn btn-sm btn-ghost" onclick="exportCustomCsv()">📄 CSV</button>
+      <button class="btn btn-sm btn-warn" onclick="exportCustomPdf()">🖨 Imprimer / PDF</button>
+    </div>
   </div>
 
-  <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 15px;"></div>
-  
-  <!-- Conteneur des résultats de la liste -->
-  <div id="pelicanResults" style="display: flex; flex-direction: column; gap: 8px;"></div>
+  <!-- Tableau interactif type BL -->
+  <div class="table-wrap" style="background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: left;">
+          <th style="width: 40px; text-align: center; padding: 10px;">✓</th>
+          <th style="width: 50px; text-align: center;">Photo</th>
+          <th style="width: 90px; padding: 8px;">Symbole / Réf</th>
+          <th style="width: 70px; padding: 8px;">Plan</th>
+          <th style="padding: 8px;">Détails de l'article</th>
+          <th style="width: 250px; padding: 8px;">Observations</th>
+        </tr>
+      </thead>
+      <tbody id="customTbody">
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 30px; color: var(--muted);">Aucun fichier importé. Veuillez sélectionner un fichier ci-dessus.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
+<!-- ================= FIN ONGLET 2 : IMPORT & SUIVI TERRAIN (CUSTOM) ================= -->
 
+<!-- ================= DÉBUT MODALES (EXPORT & CONFIG) ================= -->
 <!-- EXPORT MODAL -->
 <div class="modal-backdrop" id="shareModal" style="display:none">
   <div class="modal-box modal-sm">
@@ -155,13 +192,14 @@
     <button class="btn btn-sm btn-warn" id="btnSaveCompany" style="width: 100%; padding: 10px;">Valider et démarrer</button>
   </div>
 </div>
+<!-- ================= FIN MODALES (EXPORT & CONFIG) ================= -->
 
 <div class="toast" id="toast"></div>
 
-<!-- CHARGEMENT DE VOS SCRIPTS (AVEC VOTRE NOUVEAU IMPORT_CUSTOM.JS) -->
+<!-- ================= DÉBUT CHARGEMENT DES SCRIPTS ================= -->
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/import_custom.js"></script>
+<script src="js/import_custom.js"></script> <!-- Votre nouveau script d'import personnalisé -->
 
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
@@ -182,6 +220,7 @@ document.getElementById('btnSaveCompany').addEventListener('click', () => {
     }
 });
 </script>
+<!-- ================= FIN CHARGEMENT DES SCRIPTS ================= -->
 
 </body>
 </html>
