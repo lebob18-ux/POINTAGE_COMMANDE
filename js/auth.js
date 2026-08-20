@@ -1,14 +1,32 @@
-/* ── AUTH.JS ── */
+/* ── js/auth.js ── */
 function checkSNCF() {
-  const cp = prompt("Veuillez saisir votre N°CP (7 chiffres + 1 lettre, ex: 1234567A):");
-  // Regex : 7 chiffres (\d{7}) suivis d'une lettre ([A-Za-z])
-  const regex = /^\d{7}[A-Za-z]$/;
-  
-  if (cp && regex.test(cp)) {
-    localStorage.setItem('user_cp', cp);
-    alert("Authentification réussie !");
-    showAdminTab(); // Fonction à définir dans ui.js
-  } else {
-    alert("N°CP invalide. Accès refusé.");
-  }
+    const cp = prompt("Veuillez saisir votre N°CP (7 chiffres + 1 lettre, ex: 1234567A) :");
+    if (!cp) return;
+
+    // Regex : 7 chiffres suivis d'une lettre (majuscule ou minuscule)
+    const regex = /^\d{7}[A-Za-z]$/;
+    
+    if (regex.test(cp.trim())) {
+        localStorage.setItem('user_cp', cp.trim().toUpperCase());
+        alert("Authentification réussie !");
+        
+        // Affiche l'onglet Admin et bascule dessus
+        const adminBtn = document.getElementById('adminTabButton');
+        if (adminBtn) adminBtn.style.display = 'block';
+        
+        if (typeof switchTab === 'function') {
+            switchTab('admin');
+        }
+    } else {
+        alert("N°CP invalide. Le format doit être 7 chiffres suivis d'une lettre (ex: 1234567A).");
+    }
 }
+
+// Vérification au chargement si l'utilisateur est déjà authentifié
+window.addEventListener('DOMContentLoaded', () => {
+    const savedCp = localStorage.getItem('user_cp');
+    if (savedCp && /^\d{7}[A-Z]$/.test(savedCp)) {
+        const adminBtn = document.getElementById('adminTabButton');
+        if (adminBtn) adminBtn.style.display = 'block';
+    }
+});
