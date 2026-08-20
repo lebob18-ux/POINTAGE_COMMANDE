@@ -1,4 +1,4 @@
-/* ── GESTION DE L'IMPORTATION DE LISTES EXTERNES ── */
+/* ── GESTION DE L'IMPORTATION ET DU SUIVI INTERACTIF (MODE BL) ── */
 let customImportData = null;
 
 function handleCustomFileImport(event) {
@@ -13,7 +13,6 @@ function handleCustomFileImport(event) {
 
     const reader = new FileReader();
 
-    // 1. Fichiers Excel (.xlsx, .xlsm, .xls)
     if (['xlsx', 'xlsm', 'xls'].includes(fileExtension)) {
         reader.onload = function(e) {
             try {
@@ -30,9 +29,7 @@ function handleCustomFileImport(event) {
             }
         };
         reader.readAsArrayBuffer(file);
-    } 
-    // 2. Fichiers texte ou CSV (.csv, .txt avec séparateur ;)
-    else if (['csv', 'txt'].includes(fileExtension)) {
+    } else if (['csv', 'txt'].includes(fileExtension)) {
         reader.onload = function(e) {
             try {
                 const text = e.target.result;
@@ -83,64 +80,117 @@ function processImportedData(dataArray, fileName) {
         return;
     }
 
-    // Normalisation intelligente des colonnes (gère "symbole", "code", "numero", "num", "n°", etc.)
-    customImportData = dataArray.map(item => {
+    // Normalisation et ajout des états interactifs (checked, observation) pour chaque ligne
+    customImportData = dataArray.map((item, index) => {
         const keys = Object.keys(item);
         const findKey = (keywords) => keys.find(k => keywords.some(kw => k.toLowerCase().includes(kw))) || '';
 
         return {
+            id: index,
             symbole: item[findKey(['symbole', 'code', 'art', 'ref', 'reference', 'numero', 'num', 'n°'])] || item[keys[0]] || '',
             intituler: item[findKey(['intituler', 'libelle', 'designation', 'nom', 'description'])] || item[keys[1]] || '',
             plan: item[findKey(['plan', 'dossier', 'feuillet'])] || 'IMP',
             ensemble: item[findKey(['ensemble', 'cat', 'famille'])] || 'IMPORT',
-            qt: item[findKey(['qt', 'quantite', 'qte'])] || '1'
+            qt: item[findKey(['qt', 'quantite', 'qte'])] || '1',
+            checked: false,
+            observation: ''
         };
     });
 
     const statusInfo = document.getElementById('importStatusInfo');
-    statusInfo.innerHTML = `✅ Fichier <b>${fileName}</b> chargé avec succès (${customImportData.length} lignes).`;
+    statusInfo.innerHTML = `✅ Fichier <b>${fileName}</b> chargé (${customImportData.length} lignes). Prêt pour le suivi terrain.`;
     
-    // Affiche immédiatement la liste importée à l'écran
+    document.getElementById('customToolbar').style.display = 'flex';
     renderCustomList();
 }
 
 function renderCustomList() {
     const query = document.getElementById('searchPelican').value.toLowerCase().trim();
-    const container = document.getElementById('pelicanResults');
+    const container = document.getElementById('customTbody');
     
-    if (!customImportData) {
-        container.innerHTML = `<div style="padding: 15px; color: var(--muted); text-align: center;">Aucun fichier importé pour le moment.</div>`;
-        return;
-    }
+    if (!customImportData) return;
 
-    // Filtrage ou affichage global si la recherche est vide
     const results = query === "" 
-        ? customImportData.slice(0, 50) 
+        ? customImportData 
         : customImportData.filter(item => {
             const s = String(item.symbole || '').toLowerCase();
             const i = String(item.intituler || '').toLowerCase();
             return s.includes(query) || i.includes(query);
-          }).slice(0, 50);
+          });
 
     if (results.length === 0) {
-        container.innerHTML = `<div style="padding: 15px; color: var(--muted); text-align: center;">Aucun résultat trouvé pour "${query}"</div>`;
+        container.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--muted);">Aucun résultat trouvé.</td></tr>`;
         return;
     }
 
-    // Affichage sous forme de liste propre avec miniatures
+    // Affichage sous forme de tableau interactif (identique aux BL)
     container.innerHTML = results.map(item => `
-        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface2, #1e222d); border: 1px solid var(--border, #2a2f3d); border-radius: var(--radius, 6px); margin-bottom: 6px;">
-            <div style="width: 42px; height: 42px; flex-shrink: 0; background: #fff; border-radius: 4px; overflow: hidden; border: 1px solid var(--border);">
-                <img src="image/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'><rect width=\'100%\' height=\'100%\' fill=\'%23333\'/><text x=\'50%\' y=\'50%\' fill=\'%23aaa\' font-size=\'10\' dominant-baseline=\'middle\' text-anchor=\'middle\'>IMG</text></svg>'">
-            </div>
-            <div style="flex-grow: 1; min-width: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <span style="font-weight: bold; color: var(--text, #fff); font-size: 0.95rem;">${item.symbole}</span>
-                    <span style="font-size: 0.75rem; background: rgba(255,165,0,0.15); color: #ffa500; padding: 2px 6px; border-radius: 4px;">Réf : ${item.plan}</span>
+        <tr style="background: ${item.checked ? 'rgba(40, 167, 69, 0.08)' : 'transparent'};">
+            <td style="text-align: center;">
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCustomCheck(${item.id}, this.checked)">
+            </td>
+            <td style="text-align: center;">
+                <div style="width: 36px; height: 36px; background: #fff; border-radius: 4px; overflow: hidden; margin: 0 auto; border: 1px solid var(--border);">
+                    <img src="image/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\'><rect width=\'100%\' height=\'100%\' fill=\'%23333\'/><text x=\'50%\' y=\'50%\' fill=\'%23aaa\' font-size=\'8\' dominant-baseline=\'middle\' text-anchor=\'middle\'></text></svg>'">
                 </div>
-                <div style="font-size: 0.85rem; color: var(--muted, #aaa); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.intituler}</div>
-                <div style="font-size: 0.75rem; color: #666; margin-top: 2px;">Groupe : ${item.ensemble} &nbsp;|&nbsp; Qté : ${item.qt}</div>
-            </div>
-        </div>
+            </td>
+            <td style="font-weight: bold; font-size: 0.85rem;">${item.symbole}</td>
+            <td style="font-size: 0.8rem; color: var(--muted);">${item.plan}</td>
+            <td style="font-size: 0.85rem;">
+                <div>${item.intituler}</div>
+                <div style="font-size: 0.75rem; color: var(--muted);">Qté: ${item.qt} | Groupe: ${item.ensemble}</div>
+            </td>
+            <td>
+                <input type="text" value="${item.observation}" placeholder="Ajouter une observation..." oninput="updateCustomObs(${item.id}, this.value)" style="width: 100%; padding: 6px; font-size: 0.8rem; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+            </td>
+        </tr>
     `).join('');
+    
+    updateCustomProgress();
+}
+
+function toggleCustomCheck(id, isChecked) {
+    const item = customImportData.find(i => i.id === id);
+    if (item) {
+        item.checked = isChecked;
+        renderCustomList();
+    }
+}
+
+function updateCustomObs(id, val) {
+    const item = customImportData.find(i => i.id === id);
+    if (item) {
+        item.observation = val;
+    }
+}
+
+function updateCustomProgress() {
+    if (!customImportData || customImportData.length === 0) return;
+    const checkedCount = customImportData.filter(i => i.checked).length;
+    const percent = Math.round((checkedCount / customImportData.length) * 100);
+    
+    const bar = document.getElementById('customProgBar');
+    const txt = document.getElementById('customProgTxt');
+    if (bar) bar.style.width = percent + '%';
+    if (txt) txt.textContent = `${checkedCount} / ${customImportData.length} (${percent}%)`;
+}
+
+// Fonctions d'export pour la liste importée
+function exportCustomPdf() {
+    window.print();
+}
+
+function exportCustomCsv() {
+    if (!customImportData) return;
+    let csv = "SYMBOLE;PLAN;INTITULER;ENSEMBLE;QT;STATUT;OBSERVATION\n";
+    customImportData.forEach(i => {
+        csv += `"${i.symbole}";"${i.plan}";"${i.intituler}";"${i.ensemble}";"${i.qt}";"${i.checked ? 'VALIDÉ' : 'EN COURS'}";"${i.observation}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'suivi_import_terrain.csv';
+    a.click();
 }
