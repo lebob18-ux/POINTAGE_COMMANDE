@@ -85,13 +85,21 @@ function matchColumn(headers) {
 function parseCSV(raw) {
   const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return null;
-  const sep  = detectSeparator(lines[0]);
-  const idx  = matchColumn(lines[0].split(sep));
-  const get  = (parts, k) => (idx[k] !== -1 && parts[idx[k]] ? parts[idx[k]].trim().replace(/^["']|["']$/g, '') : '');
+  
+  // Utilise une regex pour découper en respectant les guillemets
+  // Elle cherche soit des virgules (si sep=,), soit des points-virgules (si sep=;)
+  // Tout en ignorant ceux qui sont entre deux guillemets.
+  const sep = detectSeparator(lines[0]);
+  const regex = new RegExp(`(?<=${sep}|^|\\s)("(?:[^"]|"")*"|[^${sep}]*)(?=${sep}|$)`, 'g');
+  
+  const idx = matchColumn(lines[0].split(sep));
+  const get = (parts, k) => (idx[k] !== -1 && parts[idx[k]] ? parts[idx[k]].trim().replace(/^["']|["']$/g, '').replace(/""/g, '"') : '');
   
   const rows = [];
   lines.slice(1).forEach(line => {
-    const parts = line.split(sep);
+    // On découpe la ligne correctement en tenant compte des guillemets
+    const parts = line.match(regex).filter(p => p !== sep && p !== "");
+    
     const bl = get(parts,'BL'), dm = get(parts,'DM');
     if (!bl && !dm) return;
     
@@ -103,7 +111,7 @@ function parseCSV(raw) {
       article: get(parts,'ARTICLE'), 
       intitule: get(parts,'INTITULE'), 
       quantite: get(parts,'QUANTITE'),
-      ee: get(parts,'EE').toUpperCase(), // Forcé en majuscules pour les filtres
+      ee: get(parts,'EE').toUpperCase(),
       reception: get(parts,'RECEPTION')
     });
   });
