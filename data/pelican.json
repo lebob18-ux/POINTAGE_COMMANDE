@@ -1,0 +1,16 @@
+[
+  {
+    "ensemble": "CATENAIRE",
+    "plan": "P001",
+    "symbole": "08804001",
+    "intituler": "Poteau caténaire acier",
+    "qt": "1"
+  },
+  {
+    "ensemble": "CATENAIRE",
+    "plan": "P002",
+    "symbole": "08804002",
+    "intituler": "Hauban de tension",
+    "qt": "2"
+  }
+]
