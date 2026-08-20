@@ -26,7 +26,6 @@ async function renderPelican() {
     
     const data = await loadPelicanData();
     
-    // Filtrage sur 110k lignes optimisé (limité aux 50 premiers résultats)
     const results = data.filter(item => 
         (item.symbole && item.symbole.toLowerCase().includes(query)) || 
         (item.intituler && item.intituler.toLowerCase().includes(query))
