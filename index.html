@@ -15,9 +15,8 @@
   
   <!-- Navigation par onglets -->
   <div class="nav-tabs" style="display: flex; gap: 10px; margin-left: 20px;">
-    <button class="btn btn-sm btn-ghost active" onclick="switchTab('commandes')" id="btnTabCommandes">Suivi BL</button>
-    <!-- Bouton admin caché par défaut, s'affichera si SNCF et N°CP valide -->
-    <button class="btn btn-sm btn-warn" onclick="switchTab('admin')" id="adminTabButton" style="display:none;">🔍 Admin PELICAN</button>
+    <button class="btn btn-sm btn-ghost active" onclick="switchTab('commandes')">Suivi BL</button>
+    <button class="btn btn-sm btn-warn" onclick="checkSNCF()" id="adminTabButton" style="display:none;">🔍 Admin PELICAN</button>
   </div>
 
   <div class="header-actions">
@@ -30,25 +29,20 @@
 <!-- ================= 1. ONGLET SUIVI COMMANDES ================= -->
 <div id="tab-commandes" class="tab-content" style="display:block;">
   <div class="app">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-head">
         <h2>Bons de livraison</h2>
-
-        <!-- Barre de recherche universelle avec conteneur pour la miniature -->
         <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
           <input class="search-box" type="text" id="searchBL" placeholder="Rechercher BL, DM, Article…" style="flex: 1; margin-bottom: 0;">
           <div id="searchThumbContainer" style="display: none; flex-shrink: 0;">
             <img id="searchThumbImg" src="" alt="" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
           </div>
         </div>
-
         <div class="sidebar-stats" id="sidebarStats"></div>
       </div>
       <div class="bl-list" id="blList"></div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">📋</div>
@@ -91,7 +85,7 @@
 
 <!-- ================= 2. ONGLET ADMIN PELICAN ================= -->
 <div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 800px; margin: 0 auto;">
-  <h2>🔍 Recherche Base PELICAN (110 000 références)</h2>
+  <h2>🔍 Recherche Base PELICAN</h2>
   <div style="display: flex; gap: 8px; margin-bottom: 20px;">
     <input type="text" id="searchPelican" placeholder="Tapez un symbole ou un intitulé..." style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
     <button class="btn btn-warn" onclick="renderPelican()" style="padding: 10px 20px;">Rechercher</button>
@@ -143,15 +137,27 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- SCRIPTS SÉPARÉS -->
+<!-- CHARGEMENT DE TOUS LES SCRIPTS SÉPARÉS -->
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pelican.js"></script>
-
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/import.js"></script>
 <script src="js/export.js"></script>
 <script src="js/app.js"></script>
+
+<!-- Script pour intercepter le choix "SNCF" dans votre pop-up d'entreprise d'origine -->
+<script>
+document.getElementById('btnSaveCompany').addEventListener('click', () => {
+    const val = document.getElementById('inputCompanyName').value.trim().toUpperCase();
+    if (val === 'SNCF') {
+        // Si l'utilisateur tape SNCF, on ferme le pop-up d'entreprise et on lance le contrôle N°CP
+        document.getElementById('companyModal').style.display = 'none';
+        checkSNCF();
+    }
+});
+</script>
+
 </body>
 </html>
