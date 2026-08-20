@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <!-- Librairie SheetJS pour lire Excel et CSV côté client -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suivi Commandes — SNCF Réseau</title>
   <link rel="stylesheet" href="css/style.css">
@@ -83,15 +86,33 @@
   </div>
 </div>
 
-<!-- ================= 2. ONGLET ADMIN PELICAN ================= -->
-<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 800px; margin: 0 auto;">
-  <h2>🔍 Recherche Base PELICAN</h2>
-  <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-    <input type="text" id="searchPelican" placeholder="Tapez un symbole ou un intitulé..." style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
+  <!-- ================= 2. ONGLET ADMIN PELICAN & IMPORT LIBRE ================= -->
+<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 900px; margin: 0 auto;">
+  <h2>🔍 Recherche & Importation Libre</h2>
+  
+  <!-- Zone d'import de fichier externe -->
+  <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Importer une liste externe</div>
+      <div style="font-size: 0.75rem; color: var(--muted);">Formats acceptés : CSV, TXT (séparateur ;), XLS, XLSX, XLSM</div>
+    </div>
+    <div>
+      <input type="file" id="importCustomFile" accept=".csv, .txt, .xls, .xlsx, .xlsm" style="display: none;" onchange="handleCustomFileImport(event)">
+      <button class="btn btn-sm btn-ghost" onclick="document.getElementById('importCustomFile').click()">📁 Choisir un fichier</button>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+    <input type="text" id="searchPelican" placeholder="Tapez un symbole, un libellé ou un terme de la liste importée..." style="flex-grow: 1; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
     <button class="btn btn-warn" onclick="renderPelican()" style="padding: 10px 20px;">Rechercher</button>
   </div>
+
+  <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;"></div>
   <div id="pelicanResults" style="display: flex; flex-direction: column; gap: 8px;"></div>
 </div>
+<!-- ================= 2. ONGLET ADMIN PELICAN ================= -->
+
 
 <!-- EXPORT MODAL -->
 <div class="modal-backdrop" id="shareModal" style="display:none">
