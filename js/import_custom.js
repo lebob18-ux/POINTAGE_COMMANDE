@@ -123,10 +123,10 @@ function renderCustomList() {
         return;
     }
 
-    // Affichage sous forme de tableau interactif (identique aux BL)
+    // On ajoute un onclick sur le <tr> et un curseur "pointer" pour indiquer que c'est cliquable
     container.innerHTML = results.map(item => `
-        <tr style="background: ${item.checked ? 'rgba(40, 167, 69, 0.08)' : 'transparent'};">
-            <td style="text-align: center;">
+        <tr onclick="toggleCustomRow(${item.id})" style="background: ${item.checked ? 'rgba(40, 167, 69, 0.08)' : 'transparent'}; cursor: pointer;">
+            <td style="text-align: center;" onclick="event.stopPropagation()">
                 <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCustomCheck(${item.id}, this.checked)">
             </td>
             <td style="text-align: center;">
@@ -140,7 +140,7 @@ function renderCustomList() {
                 <div>${item.intituler}</div>
                 <div style="font-size: 0.75rem; color: var(--muted);">Qté: ${item.qt} | Groupe: ${item.ensemble}</div>
             </td>
-            <td>
+            <td onclick="event.stopPropagation()">
                 <input type="text" value="${item.observation}" placeholder="Ajouter une observation..." oninput="updateCustomObs(${item.id}, this.value)" style="width: 100%; padding: 6px; font-size: 0.8rem; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
             </td>
         </tr>
@@ -149,6 +149,14 @@ function renderCustomList() {
     updateCustomProgress();
 }
 
+// Nouvelle fonction pour inverser l'état au clic sur la ligne
+function toggleCustomRow(id) {
+    const item = customImportData.find(i => i.id === id);
+    if (item) {
+        item.checked = !item.checked;
+        renderCustomList();
+    }
+}
 function toggleCustomCheck(id, isChecked) {
     const item = customImportData.find(i => i.id === id);
     if (item) {
