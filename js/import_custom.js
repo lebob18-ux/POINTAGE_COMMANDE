@@ -86,7 +86,7 @@ function processImportedData(dataArray, fileName) {
     renderCustomList();
 }
 
-// --- 5. AFFICHAGE ET INTERACTION (DESIGN BL : Miniature 90x120 + Texte empilé) ---
+// --- 5. AFFICHAGE ET INTERACTION (Design BL : Miniature HORIZONTALE 120x90 + Texte empilé) ---
 function renderCustomList() {
     const query = document.getElementById('searchPelican').value.toLowerCase().trim();
     const container = document.getElementById('customTbody');
@@ -104,10 +104,10 @@ function renderCustomList() {
                 <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCustomCheck(${item.id}, this.checked)">
             </td>
             
-            <!-- Miniature au format vertical 90x120 -->
+            <!-- Miniature au format horizontal 120x90 -->
             <td style="text-align: center; vertical-align: middle; padding: 8px;">
-                <div style="width: 90px; height: 120px; background: #fff; border-radius: 6px; overflow: hidden; margin: 0 auto; border: 1px solid var(--border);">
-                    <img src="image/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'90\' height=\'120\'><rect width=\'100%\' height=\'100%\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23777\' font-size=\'11\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\'>Aucune image</text></svg>'">
+                <div style="width: 120px; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; margin: 0 auto; border: 1px solid var(--border);">
+                    <img src="image/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'90\'><rect width=\'100%\' height=\'100%\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23777\' font-size=\'11\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\'>Aucune image</text></svg>'">
                 </div>
             </td>
             
