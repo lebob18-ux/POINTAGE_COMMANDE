@@ -86,7 +86,7 @@ function processImportedData(dataArray, fileName) {
     renderCustomList();
 }
 
-// --- 5. AFFICHAGE ET INTERACTION ---
+// --- 5. AFFICHAGE ET INTERACTION (DESIGN BL : Miniature 90x120 + Texte empilé) ---
 function renderCustomList() {
     const query = document.getElementById('searchPelican').value.toLowerCase().trim();
     const container = document.getElementById('customTbody');
@@ -99,17 +99,33 @@ function renderCustomList() {
 
     container.innerHTML = results.map(item => `
         <tr onclick="toggleCustomRow(${item.id})" style="background: ${item.checked ? 'rgba(40, 167, 69, 0.08)' : 'transparent'}; cursor: pointer;">
-            <td style="text-align: center;" onclick="event.stopPropagation()">
+            <!-- Case à cocher -->
+            <td style="text-align: center; vertical-align: middle;" onclick="event.stopPropagation()">
                 <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCustomCheck(${item.id}, this.checked)">
             </td>
-            <td style="text-align: center;">
-                <img src="image/${item.symbole}.jpg" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">
+            
+            <!-- Miniature au format vertical 90x120 -->
+            <td style="text-align: center; vertical-align: middle; padding: 8px;">
+                <div style="width: 90px; height: 120px; background: #fff; border-radius: 6px; overflow: hidden; margin: 0 auto; border: 1px solid var(--border);">
+                    <img src="image/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'90\' height=\'120\'><rect width=\'100%\' height=\'100%\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23777\' font-size=\'11\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\'>Aucune image</text></svg>'">
+                </div>
             </td>
-            <td style="font-weight: bold; font-size: 0.85rem;">${item.symbole}</td>
-            <td style="font-size: 0.8rem; color: var(--muted);">${item.plan}</td>
-            <td style="font-size: 0.85rem;">${item.intituler} <br><small style="color:var(--muted)">Qté: ${item.qt}</small></td>
-            <td onclick="event.stopPropagation()">
-                <input type="text" value="${item.observation}" placeholder="Observation..." oninput="updateCustomObs(${item.id}, this.value)" style="width: 90%; padding: 4px; font-size: 0.8rem;">
+            
+            <!-- Informations empilées l'une au-dessus de l'autre -->
+            <td colspan="3" style="vertical-align: middle; padding: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 1rem; color: var(--text);">${item.symbole}</span>
+                        <span style="font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 4px; color: var(--muted);">Plan : ${item.plan}</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text);">${item.intituler}</div>
+                    <div style="font-size: 0.8rem; color: var(--muted);">Qté : <b>${item.qt}</b> &nbsp;|&nbsp; Groupe : ${item.ensemble}</div>
+                    
+                    <!-- Champ observation intégré proprement en dessous -->
+                    <div style="margin-top: 6px;" onclick="event.stopPropagation()">
+                        <input type="text" value="${item.observation}" placeholder="Ajouter une observation..." oninput="updateCustomObs(${item.id}, this.value)" style="width: 100%; padding: 6px; font-size: 0.85rem; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+                    </div>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -147,8 +163,10 @@ function updateCustomProgress() {
     const total = customImportData.length;
     const checked = customImportData.filter(i => i.checked).length;
     const pct = total ? Math.round((checked / total) * 100) : 0;
-    document.getElementById('customProgBar').style.width = pct + '%';
-    document.getElementById('customProgTxt').textContent = `${checked} / ${total} (${pct}%)`;
+    const bar = document.getElementById('customProgBar');
+    const txt = document.getElementById('customProgTxt');
+    if (bar) bar.style.width = pct + '%';
+    if (txt) txt.textContent = `${checked} / ${total} (${pct}%)`;
 }
 
 // --- 6. EXPORT ---
