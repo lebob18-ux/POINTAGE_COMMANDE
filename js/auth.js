@@ -1,22 +1,21 @@
 /* ── js/auth.js ── */
 function checkSNCF() {
-    const cp = prompt("Veuillez saisir votre N°CP (7 chiffres + 1 lettre, ex: 1234567A) :");
-    if (!cp) return;
-
-    const regex = /^\d{7}[A-Za-z]$/;
+    // Vérifier si un code est déjà mémorisé
+    const savedCode = localStorage.getItem('sncf_auth_code');
     
-    if (regex.test(cp.trim())) {
-        localStorage.setItem('user_cp', cp.trim().toUpperCase());
-        alert("Authentification réussie !");
-        
-        const adminBtn = document.getElementById('adminTabButton');
-        if (adminBtn) adminBtn.style.display = 'inline-block';
-        
-        if (typeof switchTab === 'function') {
-            switchTab('admin');
-        }
+    if (savedCode) {
+        // Si code présent, on affiche directement l'onglet admin
+        switchTab('admin');
+        return;
+    }
+
+    // Sinon, on demande le code
+    const code = prompt("Veuillez saisir votre identifiant SNCF (7 chiffres + 1 lettre) :");
+    if (code && code.length >= 8) {
+        localStorage.setItem('sncf_auth_code', code); // Mémorisation définitive
+        switchTab('admin');
     } else {
-        alert("N°CP invalide. Le format doit être 7 chiffres suivis d'une lettre (ex: 1234567A).");
+        alert("Code invalide.");
     }
 }
 
