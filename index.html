@@ -24,15 +24,9 @@
     <button class="btn btn-sm btn-warn" onclick="checkSNCF()" id="adminTabButton" style="display:none;">🔍 Import & Liste</button>
   </div>
 
-<div class="header-actions">
+  <div class="header-actions">
     <button class="btn btn-ghost btn-sm" onclick="location.reload()" title="Recharger l'application">↺ Actualiser</button>
-</div>
-
-
-
-
-
-  
+  </div>
 </header>
 <!-- ================= FIN HEADER / NAVIGATION ================= -->
 
@@ -115,7 +109,7 @@
 
   <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;"></div>
 
-  <!-- Barre d'outils du tableau (masquée tant qu'aucun fichier n'est chargé) -->
+  <!-- Barre d'outils du tableau -->
   <div id="customToolbar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; flex-wrap: wrap;">
     <input type="text" id="searchPelican" placeholder="Filtrer dans la liste..." oninput="renderCustomList()" style="flex-grow: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
     
@@ -207,64 +201,37 @@
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/import_custom.js"></script>
-<script src="js/app.js"></script>
 <script src="js/state.js"></script>
-<script src="js/import.js"></script>
 <script src="js/render.js"></script>
-
+<script src="js/import.js"></script>
 <script src="js/export.js"></script>
+<script src="js/app.js"></script>
 
-
-<!-- Script de gestion du profil et de l'affichage du 2e onglet -->
+<!-- Script de restauration de l'affichage du bouton admin au chargement -->
 <script>
-// Fonction globale checkSNCF appelée par le bouton ou le popup
-function checkSNCF() {
-    const savedCompany = localStorage.getItem('user_company');
-    if (savedCompany === 'SNCF') {
-        // Si déjà validé SNCF, on bascule directement sur l'onglet Import
-        switchTab('admin');
-    } else {
-        // Sinon on affiche le popup de configuration
-        const modal = document.getElementById('companyModal');
-        if (modal) modal.style.display = 'flex';
-    }
-}
-
-// Vérification au chargement de la page pour afficher ou non le bouton admin
-window.addEventListener('load', () => {
-    const savedCompany = localStorage.getItem('user_company');
-    const adminBtn = document.getElementById('adminTabButton');
+window.addEventListener('load', function() {
+    var savedCompany = localStorage.getItem('user_company');
+    var savedCode = localStorage.getItem('sncf_auth_code');
+    var adminBtn = document.getElementById('adminTabButton');
     
-    if (savedCompany === 'SNCF' && adminBtn) {
-        adminBtn.style.display = 'inline-block'; // Réaffiche le bouton si l'utilisateur est SNCF
+    if ((savedCompany === 'SNCF' || savedCode) && adminBtn) {
+        adminBtn.style.display = 'inline-block';
     }
 });
 
-// Interception du clic sur le bouton de validation du popup
 document.getElementById('btnSaveCompany').addEventListener('click', () => {
     const val = document.getElementById('inputCompanyName').value.trim().toUpperCase();
     if (val === 'SNCF') {
         localStorage.setItem('user_company', 'SNCF');
         document.getElementById('companyModal').style.display = 'none';
         
-        // Rendre le bouton visible instantanément
         const adminBtn = document.getElementById('adminTabButton');
         if (adminBtn) adminBtn.style.display = 'inline-block';
         
-        // Basculer directement sur l'onglet
-        switchTab('admin');
+        checkSNCF();
     } else if (val) {
         localStorage.setItem('user_company', val);
         document.getElementById('companyModal').style.display = 'none';
-    }
-});
-  window.addEventListener('load', () => {
-    const savedCompany = localStorage.getItem('user_company');
-    const savedCode = localStorage.getItem('sncf_auth_code');
-    const adminBtn = document.getElementById('adminTabButton');
-    
-    if ((savedCompany === 'SNCF' || savedCode) && adminBtn) {
-        adminBtn.style.display = 'inline-block';
     }
 });
 </script>
