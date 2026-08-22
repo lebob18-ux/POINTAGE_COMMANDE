@@ -34,13 +34,23 @@ function switchTab(tabId) {
     // Désactiver tous les boutons de la navbar
     document.querySelectorAll('.nav-tabs .btn').forEach(el => el.classList.remove('active'));
     
-    // Afficher l'onglet sélectionné
+    // Afficher l'onglet sélectionné et activer le bon bouton
     if (tabId === 'commandes') {
-        document.getElementById('tab-commandes').style.display = 'block';
-        event.target.classList.add('active');
+        const tabEl = document.getElementById('tab-commandes');
+        if (tabEl) tabEl.style.display = 'block';
+        
+        // Active le premier bouton de la liste
+        const firstBtn = document.querySelector('.nav-tabs .btn');
+        if (firstBtn) firstBtn.classList.add('active');
+        
     } else if (tabId === 'admin') {
-        document.getElementById('tab-admin').style.display = 'block';
+        const adminTabEl = document.getElementById('tab-admin');
+        if (adminTabEl) adminTabEl.style.display = 'block';
+        
         const adminBtn = document.getElementById('adminTabButton');
-        if (adminBtn) adminBtn.classList.add('active');
+        if (adminBtn) {
+            adminBtn.style.display = 'inline-block'; // S'assure qu'il est visible
+            adminBtn.classList.add('active');
+        }
     }
 }
