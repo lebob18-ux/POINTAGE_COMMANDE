@@ -187,12 +187,17 @@ function renderPanel() {
   });
 }
 
-// Écouteur global pour la barre de recherche
+// Écouteur global pour la barre de recherche et l'affichage initial
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('searchBL');
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       renderSidebar();
     });
+  }
+  
+  // Affiche la liste des BL dès le chargement de la page
+  if (typeof renderSidebar === 'function') {
+    renderSidebar();
   }
 });
