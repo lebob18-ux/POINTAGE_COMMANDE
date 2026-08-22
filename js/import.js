@@ -1,10 +1,7 @@
-/* ── CHARGEMENT LISTE DEPUIS GITHUB ──────────────────────────────────────── */
+/* ── CHARGEMENT LISTE DEPUIS GITHUB OU LOCALSTORAGE ──────────────────────── */
 // L'agent ne modifie jamais la liste — seul le gestionnaire met à jour
 // data/liste_commandes.csv dans le dépôt GitHub.
 
-const DATA_FILE = 'data/liste_commandes.csv';
-
-/* ── CHARGEMENT LISTE DEPUIS GITHUB OU LOCALSTORAGE ──────────────────────── */
 const DATA_FILE = 'data/liste_commandes.csv';
 
 async function chargerListeGitHub() {
@@ -12,21 +9,21 @@ async function chargerListeGitHub() {
   try {
     const resp = await fetch(DATA_FILE + '?v=' + Date.now());
     if (!resp.ok) {
-      throw new Error(`Erreur ${resp.status}`);
+      throw new Error(resp.status === 404 ? 'Fichier introuvable' : `Erreur ${resp.status}`);
     }
     const raw = await resp.text();
     const rows = parseCSV(raw);
     if (!rows) { setLoadStatus('warn', '⚠ Fichier vide ou format non reconnu'); return; }
 
-    // Sauvegarde en LocalStorage pour le mode hors-ligne / mobile
+    // Sauvegarde en LocalStorage pour sécuriser le mobile
     localStorage.setItem('cached_csv_rows', JSON.stringify(rows));
 
     processLoadedRows(rows);
     return rows;
   } catch (e) {
-    console.warn("Fetch impossible (mobile ou hors ligne), tentative de lecture du cache local...", e);
+    console.warn("Fetch GitHub impossible, tentative de lecture du cache local...", e);
     
-    // Filet de secours : Lecture depuis le LocalStorage sur mobile
+    // Filet de secours : Lecture depuis le cache du téléphone si le fetch échoue
     const cachedData = localStorage.getItem('cached_csv_rows');
     if (cachedData) {
       try {
@@ -39,12 +36,11 @@ async function chargerListeGitHub() {
         setLoadStatus('warn', '⚠ Erreur lors de la lecture du cache local');
       }
     } else {
-      setLoadStatus('warn', '⚠ Impossible de charger la liste (aucune donnée en cache)');
+      setLoadStatus('warn', '⚠ Impossible de charger la liste (vérifiez votre connexion)');
     }
   }
 }
 
-// Fonction utilitaire pour mutualiser le traitement des lignes
 function processLoadedRows(rows) {
   state.rows = rows;
   const keys = new Set(rows.map(rowKey));
@@ -55,7 +51,7 @@ function processLoadedRows(rows) {
   const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
   setLoadStatus('ok', `✔ ${rows.length} lignes chargées — ${h}`);
   
-  // Force le rafraîchissement visuel immédiat de la sidebar et du panel
+  // Force l'affichage immédiat de la liste dans la sidebar
   if (typeof renderSidebar === 'function') renderSidebar();
 }
 
@@ -83,15 +79,15 @@ function normalizeHeader(h) {
 
 function matchColumn(headers) {
   const ALIASES = {
-    DM:       ['NDM','DM','NUMDM','NUMERODM'],
-    LIGNE:    ['LIGNE','LINE','LIG'],
-    BL:       ['NBL','BL','NUMBL'],
-    CHANTIER: ['CHANTIER','SITE','AFFAIRE','OPERATION','OTP'],
-    ARTICLE:  ['ARTICLE','ART','CODE','CODEART','REFERENCE','REF'],
-    INTITULE: ['INTITULE','LIBELLE','DESIGNATION','DESCRIPTION'],
-    QUANTITE: ['QUANTITE','QTE','QTY','QUANTITY'],
-    EE:       ['EE','ENTREPRISE','STE','SOCIETE'],
-    RECEPTION:['RECEPTION','STATUTRECEPTION','REC','VALIDE'],
+    DM:        ['NDM','DM','NUMDM','NUMERODM'],
+    LIGNE:     ['LIGNE','LINE','LIG'],
+    BL:        ['NBL','BL','NUMBL'],
+    CHANTIER:  ['CHANTIER','SITE','AFFAIRE','OPERATION','OTP'],
+    ARTICLE:   ['ARTICLE','ART','CODE','CODEART','REFERENCE','REF'],
+    INTITULE:  ['INTITULE','LIBELLE','DESIGNATION','DESCRIPTION'],
+    QUANTITE:  ['QUANTITE','QTE','QTY','QUANTITY'],
+    EE:        ['EE','ENTREPRISE','STE','SOCIETE'],
+    RECEPTION: ['RECEPTION','STATUTRECEPTION','REC','VALIDE'],
   };
   const idx = { DM:-1, LIGNE:-1, BL:-1, CHANTIER:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1, EE:-1, RECEPTION:-1 };
   
@@ -102,7 +98,6 @@ function matchColumn(headers) {
     });
   });
   
-  // fallback positionnel si besoin
   return idx;
 }
 
@@ -110,9 +105,6 @@ function parseCSV(raw) {
   const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return null;
   
-  // Utilise une regex pour découper en respectant les guillemets
-  // Elle cherche soit des virgules (si sep=,), soit des points-virgules (si sep=;)
-  // Tout en ignorant ceux qui sont entre deux guillemets.
   const sep = detectSeparator(lines[0]);
   const regex = new RegExp(`(?<=${sep}|^|\\s)("(?:[^"]|"")*"|[^${sep}]*)(?=${sep}|$)`, 'g');
   
@@ -121,7 +113,6 @@ function parseCSV(raw) {
   
   const rows = [];
   lines.slice(1).forEach(line => {
-    // On découpe la ligne correctement en tenant compte des guillemets
     const parts = line.match(regex).filter(p => p !== sep && p !== "");
     
     const bl = get(parts,'BL'), dm = get(parts,'DM');
