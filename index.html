@@ -24,13 +24,20 @@
     <button class="btn btn-sm btn-warn" onclick="checkSNCF()" id="adminTabButton" style="display:none;">🔍 Import & Liste</button>
   </div>
 
-  <div class="header-actions">
-    <button class="btn btn-ghost btn-sm" id="btnReload" title="Recharger la liste depuis GitHub">↺ Actualiser</button>
-  </div>
+<div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="location.reload()" title="Recharger l'application">↺ Actualiser</button>
+</div>
+
+
+
+
+
+  
 </header>
 <!-- ================= FIN HEADER / NAVIGATION ================= -->
 
-<div id="loadStatus" class="load-status" style="display:none"></div>
+<!-- Masqué pour éviter toute mention de GitHub -->
+<div id="loadStatus" class="load-status" style="display:none !important;"></div>
 
 <!-- ================= DÉBUT ONGLET 1 : SUIVI COMMANDES (BL) ================= -->
 <div id="tab-commandes" class="tab-content" style="display:block;">
