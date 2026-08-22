@@ -257,9 +257,7 @@ document.getElementById('btnSaveCompany').addEventListener('click', () => {
         document.getElementById('companyModal').style.display = 'none';
     }
 });
-</script>
-<!-- ================= FIN CHARGEMENT DES SCRIPTS ================= -->
-window.addEventListener('load', () => {
+  window.addEventListener('load', () => {
     const savedCompany = localStorage.getItem('user_company');
     const savedCode = localStorage.getItem('sncf_auth_code');
     const adminBtn = document.getElementById('adminTabButton');
@@ -268,5 +266,8 @@ window.addEventListener('load', () => {
         adminBtn.style.display = 'inline-block';
     }
 });
+</script>
+<!-- ================= FIN CHARGEMENT DES SCRIPTS ================= -->
+
 </body>
 </html>
