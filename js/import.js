@@ -4,35 +4,59 @@
 
 const DATA_FILE = 'data/liste_commandes.csv';
 
+/* ── CHARGEMENT LISTE DEPUIS GITHUB OU LOCALSTORAGE ──────────────────────── */
+const DATA_FILE = 'data/liste_commandes.csv';
+
 async function chargerListeGitHub() {
   setLoadStatus('loading', '⏳ Chargement de la liste…');
   try {
     const resp = await fetch(DATA_FILE + '?v=' + Date.now());
     if (!resp.ok) {
-      setLoadStatus('warn', resp.status === 404
-        ? '⚠ Fichier data/liste_commandes.csv introuvable dans le dépôt'
-        : `⚠ Erreur ${resp.status} lors du chargement`);
-      return;
+      throw new Error(`Erreur ${resp.status}`);
     }
     const raw = await resp.text();
     const rows = parseCSV(raw);
     if (!rows) { setLoadStatus('warn', '⚠ Fichier vide ou format non reconnu'); return; }
 
-    // Remplace la liste — les coches et obs en localStorage sont conservées
-    // si la clé (bl|dm|ligne|article) existe encore dans la nouvelle liste.
-    state.rows = rows;
-    // Purger les coches/obs dont la ligne a disparu
-    const keys = new Set(rows.map(rowKey));
-    Object.keys(state.checks).forEach(k => { if (!keys.has(k)) delete state.checks[k]; });
-    Object.keys(state.obs).forEach(k    => { if (!keys.has(k)) delete state.obs[k]; });
-    saveState();
+    // Sauvegarde en LocalStorage pour le mode hors-ligne / mobile
+    localStorage.setItem('cached_csv_rows', JSON.stringify(rows));
 
-    const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-    setLoadStatus('ok', `✔ ${rows.length} lignes chargées — ${h}`);
+    processLoadedRows(rows);
     return rows;
   } catch (e) {
-    setLoadStatus('warn', '⚠ Impossible de charger la liste (hors ligne ?)');
+    console.warn("Fetch impossible (mobile ou hors ligne), tentative de lecture du cache local...", e);
+    
+    // Filet de secours : Lecture depuis le LocalStorage sur mobile
+    const cachedData = localStorage.getItem('cached_csv_rows');
+    if (cachedData) {
+      try {
+        const rows = JSON.parse(cachedData);
+        processLoadedRows(rows);
+        const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+        setLoadStatus('ok', `✔ ${rows.length} lignes chargées depuis le cache — ${h}`);
+        return rows;
+      } catch (err) {
+        setLoadStatus('warn', '⚠ Erreur lors de la lecture du cache local');
+      }
+    } else {
+      setLoadStatus('warn', '⚠ Impossible de charger la liste (aucune donnée en cache)');
+    }
   }
+}
+
+// Fonction utilitaire pour mutualiser le traitement des lignes
+function processLoadedRows(rows) {
+  state.rows = rows;
+  const keys = new Set(rows.map(rowKey));
+  Object.keys(state.checks).forEach(k => { if (!keys.has(k)) delete state.checks[k]; });
+  Object.keys(state.obs).forEach(k => { if (!keys.has(k)) delete state.obs[k]; });
+  saveState();
+
+  const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  setLoadStatus('ok', `✔ ${rows.length} lignes chargées — ${h}`);
+  
+  // Force le rafraîchissement visuel immédiat de la sidebar et du panel
+  if (typeof renderSidebar === 'function') renderSidebar();
 }
 
 function setLoadStatus(type, msg) {
