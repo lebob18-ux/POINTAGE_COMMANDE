@@ -4,6 +4,7 @@
 let _toastTimer = null;
 function showToast(msg) {
   const el = document.getElementById('toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(_toastTimer);
@@ -11,8 +12,14 @@ function showToast(msg) {
 }
 
 /* MODALS */
-function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openModal(id)  { 
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'flex'; 
+}
+function closeModal(id) { 
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none'; 
+}
 
 document.querySelectorAll('[data-close]').forEach(btn =>
   btn.addEventListener('click', () => closeModal(btn.dataset.close))
@@ -23,37 +30,44 @@ document.querySelectorAll('.modal-backdrop').forEach(el =>
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal('shareModal'); });
 
 /* COCHE TOUT SÉLECTIONNER (thead) */
-document.getElementById('cbSelectAll').addEventListener('change', e => {
-  if (!activeBL) return;
-  const cocher = e.target.checked;
-  getRowsForBL(activeBL).forEach(r => setCheck(rowKey(r), cocher));
-  renderPanel();
-  renderSidebar();
-  showToast(cocher ? '✔ Toutes les lignes cochées' : 'Toutes les lignes décochées');
-});
+const cbSelectAll = document.getElementById('cbSelectAll');
+if (cbSelectAll) {
+  cbSelectAll.addEventListener('change', e => {
+    if (!activeBL) return;
+    const cocher = e.target.checked;
+    getRowsForBL(activeBL).forEach(r => setCheck(rowKey(r), cocher));
+    renderPanel();
+    renderSidebar();
+    showToast(cocher ? '✔ Toutes les lignes cochées' : 'Toutes les lignes décochées');
+  });
+}
 
 /* EXPORT */
-document.getElementById('btnShare').addEventListener('click', () => openModal('shareModal'));
-document.getElementById('expCsv').addEventListener('click',  () => { exportCSV();    closeModal('shareModal'); });
-document.getElementById('expXlsx').addEventListener('click', () => { exportXLSX();  closeModal('shareModal'); });
-document.getElementById('expPdf').addEventListener('click',  () => { exportPrint(); });
+const btnShare = document.getElementById('btnShare');
+if (btnShare) btnShare.addEventListener('click', () => openModal('shareModal'));
+
+const expCsv = document.getElementById('expCsv');
+if (expCsv) expCsv.addEventListener('click', () => { exportCSV(); closeModal('shareModal'); });
+
+const expXlsx = document.getElementById('expXlsx');
+if (expXlsx) expXlsx.addEventListener('click', () => { exportXLSX(); closeModal('shareModal'); });
+
+const expPdf = document.getElementById('expPdf');
+if (expPdf) expPdf.addEventListener('click', () => { exportPrint(); });
 
 /* UNIQUE BARRE DE RECHERCHE UNIVERSELLE (BL, DM, Article...) */
 const inputSearch = document.getElementById('searchBL');
 if (inputSearch) {
-    // On met à jour le placeholder pour indiquer qu'on peut tout chercher
     inputSearch.placeholder = "Rechercher BL, DM, Article…";
     
     inputSearch.addEventListener('input', (e) => {
         const terme = e.target.value.toLowerCase().trim();
         
-        // Si vide, on affiche la liste normale via renderSidebar
         if (!terme) {
             renderSidebar();
             return;
         }
 
-        // Sinon, on cherche les BL qui matchent soit sur le N° de BL, soit sur un DM, soit sur un Article
         if (typeof state !== 'undefined' && state.rows) {
             let blSet = new Set();
             state.rows.forEach(item => {
@@ -67,7 +81,6 @@ if (inputSearch) {
                 }
             });
             
-            // Affichage dynamique des BL correspondants dans la sidebar
             const container = document.getElementById('blList');
             if (container) {
                 container.innerHTML = '';
@@ -91,33 +104,44 @@ if (inputSearch) {
     });
 }
 
-/* ACTUALISER depuis GitHub */
-document.getElementById('btnReload').addEventListener('click', async () => {
-  await chargerListeGitHub();
-  renderSidebar();
-  if (activeBL && state.rows.some(r => r.bl === activeBL)) {
-    renderPanel();
-  } else {
-    activeBL = null;
-    document.getElementById('blPanel').style.display   = 'none';
-    document.getElementById('emptyState').style.display = 'flex';
-  }
-});
+/* ACTUALISER depuis GitHub (Sécurisé au cas où le bouton n'existe pas) */
+const btnReload = document.getElementById('btnReload');
+if (btnReload) {
+  btnReload.addEventListener('click', async () => {
+    await chargerListeGitHub();
+    renderSidebar();
+    if (activeBL && state.rows.some(r => r.bl === activeBL)) {
+      renderPanel();
+    } else {
+      activeBL = null;
+      const blPanel = document.getElementById('blPanel');
+      const emptyState = document.getElementById('emptyState');
+      if (blPanel) blPanel.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'flex';
+    }
+  });
+}
+
 // Si besoin d'assurer le focus sur mobile lors de la sélection d'un BL
 function selectBLSurMobile(numBl) {
     selectBL(numBl);
     if (window.innerWidth <= 768) {
-        document.getElementById('blPanel').scrollIntoView({ behavior: 'smooth' });
+        const blPanel = document.getElementById('blPanel');
+        if (blPanel) blPanel.scrollIntoView({ behavior: 'smooth' });
     }
 }
+
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
-loadState();
+if (typeof loadState === 'function') loadState();
 
 // Charger la liste depuis GitHub au démarrage SANS pré-sélectionner de BL
-chargerListeGitHub().then(() => {
-  renderSidebar();
-  // On s'assure de rester sur l'écran vide au démarrage
-  activeBL = null;
-  document.getElementById('blPanel').style.display = 'none';
-  document.getElementById('emptyState').style.display = 'flex';
-});
+if (typeof chargerListeGitHub === 'function') {
+  chargerListeGitHub().then(() => {
+    if (typeof renderSidebar === 'function') renderSidebar();
+    activeBL = null;
+    const blPanel = document.getElementById('blPanel');
+    const emptyState = document.getElementById('emptyState');
+    if (blPanel) blPanel.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'flex';
+  });
+}
