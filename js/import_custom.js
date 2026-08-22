@@ -105,11 +105,12 @@ function renderCustomList() {
             </td>
             
             <!-- Miniature au format horizontal 120x90 -->
+            <!-- Miniature chargée depuis le dépôt GitHub partagé MIGNATURE_K1 -->
             <td style="text-align: center; vertical-align: middle; padding: 8px;">
                 <div style="width: 120px; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; margin: 0 auto; border: 1px solid var(--border);">
-                   
-                    
-                    <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${item.symbole}.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'90\'><rect width=\'100%\' height=\'100%\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23777\' font-size=\'11\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\'>Aucune image</text></svg>'">
+                    <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${item.symbole}.jpg" 
+                         style="width: 100%; height: 100%; object-fit: cover;" 
+                         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'90\'><rect width=\'100%\' height=\'100%\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23777\' font-size=\'11\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\'>Aucune image</text></svg>'">
                 </div>
             </td>
             
