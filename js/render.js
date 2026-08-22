@@ -7,16 +7,16 @@ function esc(s) {
 /* ── SIDEBAR & RECHERCHE ─────────────────────────────────────────────────── */
 function renderSidebar() {
   const searchInput = document.getElementById('searchBL');
-  const filter = searchInput.value.toLowerCase().trim();
-  const allBLs = getBLs();
+  const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche
+  // Gestion de la miniature dynamique à côté de la recherche (Dépôt GitHub partagé)
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
-  if (filter.length >= 2) {
-    thumbImg.src = `image/${filter}.jpg`;
-    thumbImg.onerror = () => { thumbContainer.style.display = 'none'; };
-    thumbImg.onload = () => { thumbContainer.style.display = 'block'; };
+  if (filter.length >= 2 && thumbImg) {
+    thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${filter}.jpg`;
+    thumbImg.onerror = () => { if (thumbContainer) thumbContainer.style.display = 'none'; };
+    thumbImg.onload = () => { if (thumbContainer) thumbContainer.style.display = 'block'; };
   } else {
     if (thumbContainer) thumbContainer.style.display = 'none';
   }
@@ -29,7 +29,7 @@ function renderSidebar() {
 
   // Stats globales
   const total = allBLs.length;
-  const done  = allBLs.filter(b => blStatus(b.bl) === 'ok').length;
+  const done  = allBLs.filter(b => typeof blStatus === 'function' && blStatus(b.bl) === 'ok').length;
   const statsEl = document.getElementById('sidebarStats');
   if (statsEl) {
     statsEl.textContent = total ? `${done}/${total} BL complet${done > 1 ? 's' : ''}` : '';
@@ -50,14 +50,14 @@ function renderSidebar() {
   const labelMap  = { ok: '✔ Complet', partial: 'En cours', new: 'À réceptionner' };
 
   bls.forEach(b => {
-    const st  = blStatus(b.bl);
+    const st  = typeof blStatus === 'function' ? blStatus(b.bl) : 'new';
     const div = document.createElement('div');
     div.className = 'bl-item' + (b.bl === activeBL ? ' active' : '');
     div.innerHTML = `
       <div class="bl-num">${esc(b.bl)}</div>
       <div class="bl-meta">
         <span>${b.count} article${b.count > 1 ? 's' : ''}</span>
-        <span class="bl-badge ${badgeMap[st]}">${labelMap[st]}</span>
+        <span class="bl-badge ${badgeMap[st] || 'badge-new'}">${labelMap[st] || 'À réceptionner'}</span>
       </div>
       <div class="bl-dms">${[...b.dms].map(esc).join(', ')}</div>
     `;
@@ -79,8 +79,8 @@ function selectBL(bl) {
 
 function renderPanel() {
   if (!activeBL) return;
-  const rows = getRowsForBL(activeBL);
-  const prg  = blProgress(activeBL);
+  const rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
+  const prg  = typeof blProgress === 'function' ? blProgress(activeBL) : { done: 0, total: rows.length, pct: 0 };
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
 
   const panelTitle = document.getElementById('panelTitle');
@@ -96,7 +96,7 @@ function renderPanel() {
   /* Coche "tout-sélectionner" dans le thead */
   const cbAll = document.getElementById('cbSelectAll');
   if (cbAll) {
-    cbAll.checked        = prg.done === prg.total && prg.total > 0;
+    cbAll.checked         = prg.done === prg.total && prg.total > 0;
     cbAll.indeterminate = prg.done > 0 && prg.done < prg.total;
   }
 
@@ -105,9 +105,9 @@ function renderPanel() {
   tbody.innerHTML = '';
 
   rows.forEach(r => {
-    const k       = rowKey(r);
-    const checked = !!state.checks[k];
-    const obsVal  = state.obs[k] || '';
+    const k       = typeof rowKey === 'function' ? rowKey(r) : r.article;
+    const checked = !!(state && state.checks && state.checks[k]);
+    const obsVal  = (state && state.obs && state.obs[k]) || '';
 
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
@@ -117,12 +117,7 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DIRECTEMENT À GAUCHE -->
-
-
-
-
-      
+      <!-- MINIATURE DEPUIS LE DEPOT GITHUB MIGNATURE_K1 -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
         <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
@@ -167,7 +162,7 @@ function renderPanel() {
       const cb = tr.querySelector('input[type=checkbox]');
       if (cb) {
         cb.checked = !cb.checked;
-        setCheck(cb.dataset.key, cb.checked);
+        if (typeof setCheck === 'function') setCheck(cb.dataset.key, cb.checked);
         renderPanel();
         renderSidebar();
       }
@@ -179,14 +174,16 @@ function renderPanel() {
   /* Événements sur les éléments interactifs de la table */
   tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', e => {
-      setCheck(e.target.dataset.key, e.target.checked);
+      if (typeof setCheck === 'function') setCheck(e.target.dataset.key, e.target.checked);
       renderPanel();
       renderSidebar();
     });
   });
 
   tbody.querySelectorAll('.obs-input').forEach(inp => {
-    inp.addEventListener('input', e => setObs(e.target.dataset.obskey, e.target.value));
+    inp.addEventListener('input', e => {
+      if (typeof setObs === 'function') setObs(e.target.dataset.obskey, e.target.value);
+    });
   });
 }
 
