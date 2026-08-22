@@ -259,6 +259,14 @@ document.getElementById('btnSaveCompany').addEventListener('click', () => {
 });
 </script>
 <!-- ================= FIN CHARGEMENT DES SCRIPTS ================= -->
-
+window.addEventListener('load', () => {
+    const savedCompany = localStorage.getItem('user_company');
+    const savedCode = localStorage.getItem('sncf_auth_code');
+    const adminBtn = document.getElementById('adminTabButton');
+    
+    if ((savedCompany === 'SNCF' || savedCode) && adminBtn) {
+        adminBtn.style.display = 'inline-block';
+    }
+});
 </body>
 </html>
