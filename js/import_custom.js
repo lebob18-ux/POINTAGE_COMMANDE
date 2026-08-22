@@ -118,11 +118,10 @@ function renderCustomList() {
             <td colspan="3" style="vertical-align: middle; padding: 10px;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold; font-size: 1rem; color: var(--text);">${item.symbole}</span>
-                        <span style="font-size: 0.75rem; background: var(--border); padding: 2px 6px; border-radius: 4px; color: var(--muted);">Plan : ${item.plan}</span>
+                        <span style="font-weight: bold; font-size: 1rem; color: var(--text);">${item.symbole}</span>                        
                     </div>
                     <div style="font-size: 0.9rem; color: var(--text);">${item.intituler}</div>
-                    <div style="font-size: 0.8rem; color: var(--muted);">Qté : <b>${item.qt}</b> &nbsp;|&nbsp; Groupe : ${item.ensemble}</div>
+                    <div style="font-size: 0.8rem; color: var(--muted);">Qté : <b>${item.qt}</b> </div>
                     
                     <!-- Champ observation intégré proprement en dessous -->
                     <div style="margin-top: 6px;" onclick="event.stopPropagation()">
