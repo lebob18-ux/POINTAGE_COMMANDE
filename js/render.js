@@ -118,8 +118,13 @@ function renderPanel() {
       </td>
       
       <!-- MINIATURE DIRECTEMENT À GAUCHE -->
+
+
+
+
+      
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
-        <img src="image/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
+        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
       </td>
 
