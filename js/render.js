@@ -10,11 +10,11 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche (Dépôt GitHub partagé)
+  // Gestion de la miniature dynamique à côté de la recherche (Dossier IMG_JPG du dépôt)
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
   if (filter.length >= 2 && thumbImg) {
-    thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${filter}.jpg`;
+    thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${filter}.jpg`;
     thumbImg.onerror = () => { if (thumbContainer) thumbContainer.style.display = 'none'; };
     thumbImg.onload = () => { if (thumbContainer) thumbContainer.style.display = 'block'; };
   } else {
@@ -105,7 +105,7 @@ function renderPanel() {
   tbody.innerHTML = '';
 
   rows.forEach(r => {
-    const k       = typeof rowKey === 'function' ? rowKey(r) : r.article;
+    const k        = typeof rowKey === 'function' ? rowKey(r) : r.article;
     const checked = !!(state && state.checks && state.checks[k]);
     const obsVal  = (state && state.obs && state.obs[k]) || '';
 
@@ -117,9 +117,9 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DEPUIS LE DEPOT GITHUB MIGNATURE_K1 -->
+      <!-- MINIATURE DEPUIS LE DOSSIER IMG_JPG DU DEPOT GITHUB -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
-        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
+        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
       </td>
 
