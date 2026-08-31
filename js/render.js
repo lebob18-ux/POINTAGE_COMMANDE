@@ -51,10 +51,18 @@ function renderSidebar() {
 
   bls.forEach(b => {
     const st  = typeof blStatus === 'function' ? blStatus(b.bl) : 'new';
+    
+    // Récupération du nom du chantier associé au BL
+    let chantierNom = '';
+    const rowsForThisBL = typeof getRowsForBL === 'function' ? getRowsForBL(b.bl) : [];
+    if (rowsForThisBL && rowsForThisBL.length > 0 && rowsForThisBL[0].chantier) {
+      chantierNom = rowsForThisBL[0].chantier;
+    }
+
     const div = document.createElement('div');
     div.className = 'bl-item' + (b.bl === activeBL ? ' active' : '');
     div.innerHTML = `
-      <div class="bl-num">${esc(b.bl)}</div>
+      <div class="bl-num">BL n° ${esc(b.bl)}${chantierNom ? ` — ${esc(chantierNom)}` : ''}</div>
       <div class="bl-meta">
         <span>${b.count} article${b.count > 1 ? 's' : ''}</span>
         <span class="bl-badge ${badgeMap[st] || 'badge-new'}">${labelMap[st] || 'À réceptionner'}</span>
