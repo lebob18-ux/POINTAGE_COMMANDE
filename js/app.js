@@ -60,6 +60,15 @@ const inputSearch = document.getElementById('searchBL');
 if (inputSearch) {
     inputSearch.placeholder = "Rechercher BL, DM, Article…";
     
+    // Fermeture automatique du panneau actif (reset) lorsqu'on clique/écrit dans la recherche
+    inputSearch.addEventListener('focus', () => {
+        activeBL = null;
+        const blPanel = document.getElementById('blPanel');
+        const emptyState = document.getElementById('emptyState');
+        if (blPanel) blPanel.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+    });
+    
     inputSearch.addEventListener('input', (e) => {
         const terme = e.target.value.toLowerCase().trim();
         
@@ -84,7 +93,10 @@ if (inputSearch) {
             const container = document.getElementById('blList');
             if (container) {
                 container.innerHTML = '';
-                const listeBl = Array.from(blSet);
+                let listeBl = Array.from(blSet);
+                
+                // Tri alphabétique / numérique des résultats de recherche
+                listeBl.sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
                 
                 if (listeBl.length === 0) {
                     container.innerHTML = '<div style="padding: 10px; color: #888; text-align:center;">Aucun résultat</div>';
@@ -95,8 +107,16 @@ if (inputSearch) {
                     let div = document.createElement('div');
                     div.className = 'bl-item';
                     if (activeBL === numBl) div.classList.add('active');
-                    div.textContent = `BL n° ${numBl}`;
-                    div.onclick = () => selectBL(numBl);
+                    
+                    // Récupération du chantier et du nombre d'articles pour l'affichage
+                    let chantierNom = '';
+                    let rowsForThisBL = typeof getRowsForBL === 'function' ? getRowsForBL(numBl) : [];
+                    if (rowsForThisBL && rowsForThisBL.length > 0 && rowsForThisBL[0].chantier) {
+                        chantierNom = ` — ${rowsForThisBL[0].chantier}`;
+                    }
+
+                    div.textContent = `BL n° ${numBl}${chantierNom} (${rowsForThisBL.length} art.)`;
+                    div.onclick = () => selectBLSurMobile(numBl);
                     container.appendChild(div);
                 });
             }
