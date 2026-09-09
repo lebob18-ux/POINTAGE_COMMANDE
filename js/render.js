@@ -14,15 +14,13 @@ function renderSidebar() {
   
   const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
 
-  // CONSTRUCTION DIRECTE DES BLs DEPUIS STATE.ROWS POUR CONTRÔLER LE FILTRE À 100%
+  // Construction directe des BLs filtrés selon l'entreprise
   let allBLs = [];
   if (typeof state !== 'undefined' && state.rows && Array.isArray(state.rows)) {
-    // 1. Filtrer les lignes selon l'entreprise (si pas SNCF)
     const rowsFiltrees = (monEntreprise && monEntreprise !== 'SNCF')
       ? state.rows.filter(r => String(r.ee || '').trim().toUpperCase() === monEntreprise)
       : state.rows;
 
-    // 2. Regrouper par BL
     const blMap = new Map();
     rowsFiltrees.forEach(r => {
       const blNum = String(r.bl || '').trim();
@@ -36,11 +34,10 @@ function renderSidebar() {
     });
     allBLs = Array.from(blMap.values());
   } else {
-    // Fallback si state.rows n'existe pas encore
     allBLs = typeof getBLs === 'function' ? getBLs() : [];
   }
   
-  // Gestion de la miniature dynamique à côté de la recherche via Supabase (8 chiffres)
+  // Gestion de la miniature dynamique dans la barre de recherche
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
   
@@ -71,7 +68,6 @@ function renderSidebar() {
         [...b.dms].some(d => d.toLowerCase().includes(filter)))
     : allBLs;
 
-  // Stats globales
   const total = allBLs.length;
   const done  = allBLs.filter(b => typeof blStatus === 'function' && blStatus(b.bl) === 'ok').length;
   const statsEl = document.getElementById('sidebarStats');
@@ -132,7 +128,7 @@ function renderPanel() {
   if (!activeBL) return;
   let rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
   
-  // === FILTRE STRICT DES LIGNES PAR ENTREPRISE ===
+  // Filtrage strict des lignes du BL selon l'entreprise connectée
   const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
   if (monEntreprise && monEntreprise !== 'SNCF') {
     rows = rows.filter(r => {
@@ -140,7 +136,6 @@ function renderPanel() {
       return eeLigne === monEntreprise;
     });
   }
-  // ===============================================
 
   const prg  = typeof blProgress === 'function' ? blProgress(activeBL) : { done: 0, total: rows.length, pct: 0 };
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
@@ -157,7 +152,7 @@ function renderPanel() {
 
   const cbAll = document.getElementById('cbSelectAll');
   if (cbAll) {
-    cbAll.checked         = prg.done === prg.total && prg.total > 0;
+    cbAll.checked       = prg.done === prg.total && prg.total > 0;
     cbAll.indeterminate = prg.done > 0 && prg.done < prg.total;
   }
 
@@ -166,10 +161,11 @@ function renderPanel() {
   tbody.innerHTML = '';
 
   rows.forEach(r => {
-    const k        = typeof rowKey === 'function' ? rowKey(r) : r.article;
+    const k       = typeof rowKey === 'function' ? rowKey(r) : r.article;
     const checked = !!(state && state.checks && state.checks[k]);
     const obsVal  = (state && state.obs && state.obs[k]) || '';
     
+    // ID unique et format à 8 chiffres pour Supabase
     const imgId = `img_article_${Math.random().toString(36).substr(2, 9)}`;
     const plan8 = String(r.article).trim().padStart(8, '0');
 
@@ -181,6 +177,7 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
+      <!-- MINIATURE ARTICLE DEPUIS SUPABASE STORAGE (MIGNATURE_K1) -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
         <img id="${esc(imgId)}" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2290%22%3E%3Crect width=%22120%22 height=%2290%22 fill=%22%23eee%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2211%22 fill=%22%23aaa%22%3ELoading...%3C/text%3E%3C/svg%3E" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
@@ -211,6 +208,7 @@ function renderPanel() {
       </td>
     `;
 
+    // Chargement dynamique de la miniature de l'article depuis Supabase
     if (window.supabaseClient) {
       window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan8}.jpg`, 60)
         .then(({ data, error }) => {
