@@ -10,12 +10,15 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche (Dossier IMG_JPG du dépôt)
+  // Gestion de la miniature dynamique à côté de la recherche avec repli sur image manquante
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
   if (filter.length >= 2 && thumbImg) {
     thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${filter}.jpg`;
-    thumbImg.onerror = () => { if (thumbContainer) thumbContainer.style.display = 'none'; };
+    thumbImg.onerror = () => {
+      thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/manquante.jpg`;
+      if (thumbContainer) thumbContainer.style.display = 'block';
+    };
     thumbImg.onload = () => { if (thumbContainer) thumbContainer.style.display = 'block'; };
   } else {
     if (thumbContainer) thumbContainer.style.display = 'none';
@@ -125,9 +128,9 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DEPUIS LE DOSSIER IMG_JPG DU DEPOT GITHUB -->
+      <!-- MINIATURE AVEC REMPLACEMENT AUTOMATIQUE SI MANQUANTE -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
-        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.style.display='none'">
+        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/manquante.jpg';">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
       </td>
 
@@ -149,7 +152,7 @@ function renderPanel() {
           </div>
 
           <!-- Ligne 2 : Intitulé complet -->
-          <div class="cell-intitule" style="font-size: 0.75rem; margin-bottom: 4px; word-break: break-word; line-height: 1.2;">
+          <div style="font-size: 0.75rem; margin-bottom: 4px; word-break: break-word; line-height: 1.2;">
             ${esc(r.intitule)}
           </div>
 
