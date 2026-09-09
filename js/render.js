@@ -13,17 +13,23 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   let allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // === FILTRE PAR ENTREPRISE ===
-  const monEntreprise = localStorage.getItem('user_company');
+  // === FILTRE STRICT PAR ENTREPRISE (SÉCURISÉ) ===
+  const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
+  
   if (monEntreprise && monEntreprise !== 'SNCF' && typeof state !== 'undefined' && state.rows) {
-    const blsAutorises = new Set(
-      state.rows
-        .filter(r => r.ee && r.ee.trim().toUpperCase() === monEntreprise)
-        .map(r => r.bl)
-    );
-    allBLs = allBLs.filter(b => blsAutorises.has(b.bl));
+    // 1. On filtre d'abord toutes les lignes globales de l'état selon l'entreprise connectée
+    const lignesFiltreesParEntreprise = state.rows.filter(r => {
+      const eeLigne = String(r.ee || '').trim().toUpperCase();
+      return eeLigne === monEntreprise;
+    });
+
+    // 2. On extrait la liste exacte des numéros de BL autorisés pour cette entreprise
+    const blsAutorises = new Set(lignesFiltreesParEntreprise.map(r => String(r.bl).trim()));
+
+    // 3. On filtre la liste des BLs globale
+    allBLs = allBLs.filter(b => blsAutorises.has(String(b.bl).trim()));
   }
-  // =============================
+  // ===============================================
   
   // Gestion de la miniature dynamique à côté de la recherche via Supabase (8 chiffres)
   const thumbContainer = document.getElementById('searchThumbContainer');
@@ -117,12 +123,15 @@ function renderPanel() {
   if (!activeBL) return;
   let rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
   
-  // === FILTRE PAR ENTREPRISE SUR LES LIGNES DU BL ===
-  const monEntreprise = localStorage.getItem('user_company');
+  // === FILTRE STRICT DES LIGNES PAR ENTREPRISE ===
+  const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
   if (monEntreprise && monEntreprise !== 'SNCF') {
-    rows = rows.filter(r => r.ee && r.ee.trim().toUpperCase() === monEntreprise);
+    rows = rows.filter(r => {
+      const eeLigne = String(r.ee || '').trim().toUpperCase();
+      return eeLigne === monEntreprise;
+    });
   }
-  // ==================================================
+  // ===============================================
 
   const prg  = typeof blProgress === 'function' ? blProgress(activeBL) : { done: 0, total: rows.length, pct: 0 };
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
