@@ -1,5 +1,8 @@
 /* ── RENDER.JS ───────────────────────────────────────────────────────────── */
 
+// Configuration de votre bucket Supabase pour les miniatures
+const SUPABASE_IMAGE_URL = "https://thbqkeugjvsxbryfnzuo.supabase.co/storage/v1/object/public/miniatures/";
+
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -10,13 +13,13 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche avec repli sur image manquante
+  // Gestion de la miniature dynamique à côté de la recherche (depuis Supabase)
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
   if (filter.length >= 2 && thumbImg) {
-    thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${filter}.jpg`;
+    thumbImg.src = `${SUPABASE_IMAGE_URL}${filter}.jpg`;
     thumbImg.onerror = () => {
-      thumbImg.src = `https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/manquante.jpg`;
+      thumbImg.src = `${SUPABASE_IMAGE_URL}manquante.jpg`;
       if (thumbContainer) thumbContainer.style.display = 'block';
     };
     thumbImg.onload = () => { if (thumbContainer) thumbContainer.style.display = 'block'; };
@@ -128,9 +131,9 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE AVEC REMPLACEMENT AUTOMATIQUE SI MANQUANTE -->
+      <!-- MINIATURE DEPUIS SUPABASE AVEC SECOURS MANQUANTE -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
-        <img src="https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/lebob18-ux/MIGNATURE_K1/main/IMG_JPG/manquante.jpg';">
+        <img src="${SUPABASE_IMAGE_URL}${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='${SUPABASE_IMAGE_URL}manquante.jpg';">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
       </td>
 
