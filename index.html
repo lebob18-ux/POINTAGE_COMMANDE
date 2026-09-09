@@ -12,7 +12,28 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+<!-- ÉCRAN DE VERROUILLAGE / DEMANDE D'ACCÈS -->
+<div id="auth-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <h2 style="margin-top: 0; color: #333;">Accès à l'application</h2>
+        <p id="auth-message" style="color: #666; font-size: 14px; margin-bottom: 20px;">Veuillez renseigner vos informations pour demander l'accès.</p>
+        
+        <!-- Formulaire de demande -->
+        <div id="form-demande">
+            <input type="text" id="req-prenom" placeholder="Votre Prénom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br>
+            <input type="text" id="req-nom" placeholder="Votre Nom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br>
+            <input type="email" id="req-email" placeholder="Votre Email professionnel" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br>
+            <button onclick="envoyerDemandeAcces()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">Demander l'accès</button>
+        </div>
 
+        <!-- Message si déjà demandé mais en attente -->
+        <div id="attente-validation" style="display: none;">
+            <p style="color: #d9534f; font-weight: bold; margin-bottom: 10px;">Votre demande est en cours de validation par l'administrateur.</p>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Revenez plus tard et cliquez sur le bouton ci-dessous pour vérifier.</p>
+            <button onclick="verifierAcces()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Vérifier si validé</button>
+        </div>
+    </div>
+</div>
 <!-- ================= DÉBUT HEADER / NAVIGATION ================= -->
 <header>
   <div class="logo">📦 Suivi Commandes <span>SNCF Réseau</span></div>
