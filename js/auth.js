@@ -109,15 +109,13 @@ async function envoyerDemandeAcces() {
     const prenomEl = document.getElementById('req-prenom');
     const nomEl = document.getElementById('req-nom');
     const emailEl = document.getElementById('req-email');
-    const entrepriseEl = document.getElementById('req-entreprise');
 
     const prenom = prenomEl ? prenomEl.value.trim() : '';
     const nom = nomEl ? nomEl.value.trim() : '';
     const email = emailEl ? emailEl.value.trim() : '';
-    const entreprise = entrepriseEl ? entrepriseEl.value.trim().toUpperCase() : '';
 
-    if (!prenom || !nom || !email || !entreprise) {
-        alert('Veuillez remplir tous les champs, y compris l\'entreprise.');
+    if (!prenom || !nom || !email) {
+        alert('Veuillez remplir tous les champs.');
         return;
     }
     if (!window.supabaseClient) {
@@ -134,7 +132,6 @@ async function envoyerDemandeAcces() {
 
     if (existant) {
         localStorage.setItem('pelican_user_email', email);
-        localStorage.setItem('user_company', entreprise);
         if (existant.cmd_bl) {
             const overlay = document.getElementById('auth-overlay');
             if (overlay) overlay.style.display = 'none';
@@ -149,10 +146,10 @@ async function envoyerDemandeAcces() {
         return;
     }
 
-    // Insertion propre sans la colonne admin, uniquement avec entreprise
+    // Insertion sans demander l'entreprise (la colonne entreprise dans Supabase sera vide par défaut ou gérée côté admin)
     const { error } = await window.supabaseClient
         .from('app_bob')
-        .insert([{ prenom, nom, email, entreprise, cmd_bl: false }]);
+        .insert([{ prenom, nom, email, cmd_bl: false }]);
 
     if (error) {
         alert('Erreur lors de l\'envoi de la demande : ' + error.message);
@@ -160,7 +157,6 @@ async function envoyerDemandeAcces() {
     }
 
     localStorage.setItem('pelican_user_email', email);
-    localStorage.setItem('user_company', entreprise);
     
     const formDemande = document.getElementById('form-demande');
     const attenteVal = document.getElementById('attente-validation');
