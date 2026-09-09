@@ -1,7 +1,7 @@
 /* ── RENDER.JS ───────────────────────────────────────────────────────────── */
 
-// Configuration de votre bucket Supabase pour les miniatures
-const SUPABASE_IMAGE_URL = "https://thbqkeugjvsxbryfnzuo.supabase.co/storage/v1/object/public/miniatures/";
+// Configuration du bucket Supabase pour les miniatures
+const SUPABASE_BUCKET_MINIATURES = "MIGNATURE_K1";
 
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -13,16 +13,27 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche (depuis Supabase)
+  // Gestion de la miniature dynamique à côté de la recherche via Supabase
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
+  
   if (filter.length >= 2 && thumbImg) {
-    thumbImg.src = `${SUPABASE_IMAGE_URL}${filter}.jpg`;
-    thumbImg.onerror = () => {
-      thumbImg.src = `${SUPABASE_IMAGE_URL}manquante.jpg`;
-      if (thumbContainer) thumbContainer.style.display = 'block';
-    };
-    thumbImg.onload = () => { if (thumbContainer) thumbContainer.style.display = 'block'; };
+    const plan6 = filter.padStart(6, '0');
+    if (window.supabaseClient) {
+      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan6}.jpg`, 60)
+        .then(({ data, error }) => {
+          if (data && !error) {
+            thumbImg.src = data.signedUrl;
+            if (thumbContainer) thumbContainer.style.display = 'block';
+          } else {
+            window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl('manquante.png', 60)
+              .then(({ data: fallback }) => {
+                if (fallback) thumbImg.src = fallback.signedUrl;
+                if (thumbContainer) thumbContainer.style.display = 'block';
+              });
+          }
+        });
+    }
   } else {
     if (thumbContainer) thumbContainer.style.display = 'none';
   }
@@ -58,7 +69,6 @@ function renderSidebar() {
   bls.forEach(b => {
     const st  = typeof blStatus === 'function' ? blStatus(b.bl) : 'new';
     
-    // Récupération du nom du chantier associé au BL
     let chantierNom = '';
     const rowsForThisBL = typeof getRowsForBL === 'function' ? getRowsForBL(b.bl) : [];
     if (rowsForThisBL && rowsForThisBL.length > 0 && rowsForThisBL[0].chantier) {
@@ -107,7 +117,6 @@ function renderPanel() {
   if (progBar) progBar.style.width      = prg.pct + '%';
   if (progTxt) progTxt.textContent      = `${prg.done} / ${prg.total}`;
 
-  /* Coche "tout-sélectionner" dans le thead */
   const cbAll = document.getElementById('cbSelectAll');
   if (cbAll) {
     cbAll.checked         = prg.done === prg.total && prg.total > 0;
@@ -122,6 +131,10 @@ function renderPanel() {
     const k        = typeof rowKey === 'function' ? rowKey(r) : r.article;
     const checked = !!(state && state.checks && state.checks[k]);
     const obsVal  = (state && state.obs && state.obs[k]) || '';
+    
+    // Génération d'un ID unique pour charger l'image de cet article via Supabase Storage
+    const imgId = `img_article_${Math.random().toString(36).substr(2, 9)}`;
+    const plan6 = String(r.article).trim().padStart(6, '0');
 
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
@@ -131,46 +144,62 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DEPUIS SUPABASE AVEC SECOURS MANQUANTE -->
+      <!-- MINIATURE DEPUIS SUPABASE STORAGE (MIGNATURE_K1) -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
-        <img src="${SUPABASE_IMAGE_URL}${esc(r.article)}.jpg" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='${SUPABASE_IMAGE_URL}manquante.jpg';">
+        <img id="${esc(imgId)}" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2290%22%3E%3Crect width=%22120%22 height=%2290%22 fill=%22%23eee%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2211%22 fill=%22%23aaa%22%3ELoading...%3C/text%3E%3C/svg%3E" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
       </td>
 
       <td class="td-dm col-dm" style="font-size: 0.7rem; padding: 4px 2px; word-break: break-all;">${esc(r.dm)}</td>
       <td class="col-ligne" style="font-size: 0.7rem; padding: 4px 2px;">${esc(r.ligne)}</td>
       
-      <!-- COLONNE EE (Entreprise) -->
       <td style="text-align: center; font-size: 0.7rem; font-weight: bold; color: var(--warn); padding: 4px 2px;">
         ${esc(r.ee || '—')}
       </td>
 
       <td style="padding: 4px 4px;">
         <div style="width: 100%; box-sizing: border-box;">
-          
-          <!-- Ligne 1 : Symbole (Article) collé au Chantier -->
           <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; margin-bottom: 2px;">
             <span class="cell-article" style="font-weight: bold;">${esc(r.article)}</span>
             <span class="chantier-badge" style="font-size: 0.65rem; background: var(--surface2); padding: 1px 4px; border-radius: 3px;">${esc(r.chantier || '—')}</span>
           </div>
-
-          <!-- Ligne 2 : Intitulé complet -->
           <div style="font-size: 0.75rem; margin-bottom: 4px; word-break: break-word; line-height: 1.2;">
             ${esc(r.intitule)}
           </div>
-
-          <!-- Ligne 3 : Champ d'observation -->
           <div class="cell-obs-wrap">
             <input class="obs-input" type="text" placeholder="Observation..."
                    data-obskey="${esc(k)}" value="${esc(obsVal)}"
                    style="width: 100%; font-size: 0.7rem; padding: 3px 6px; box-sizing: border-box;">
           </div>
-
         </div>
       </td>
     `;
 
-    // Clic sur toute la ligne pour cocher/décocher (sauf sur les champs de saisie)
+    // Appel asynchrone Supabase pour récupérer l'URL signée de la miniature
+    if (window.supabaseClient) {
+      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan6}.jpg`, 60)
+        .then(({ data, error }) => {
+          const elImg = document.getElementById(imgId);
+          if (elImg && data && !error) {
+            elImg.src = data.signedUrl;
+          } else if (elImg) {
+            window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl('manquante.png', 60)
+              .then(({ data: fallback }) => {
+                if (fallback) elImg.src = fallback.signedUrl;
+              });
+          }
+        })
+        .catch(() => {
+          const elImg = document.getElementById(imgId);
+          if (elImg) {
+            window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl('manquante.png', 60)
+              .then(({ data: fallback }) => {
+                if (fallback) elImg.src = fallback.signedUrl;
+              });
+          }
+        });
+    }
+
     tr.addEventListener('click', e => {
       if (['input', 'label'].includes(e.target.tagName.toLowerCase())) return;
       const cb = tr.querySelector('input[type=checkbox]');
@@ -185,7 +214,6 @@ function renderPanel() {
     tbody.appendChild(tr);
   });
 
-  /* Événements sur les éléments interactifs de la table */
   tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', e => {
       if (typeof setCheck === 'function') setCheck(e.target.dataset.key, e.target.checked);
@@ -201,7 +229,6 @@ function renderPanel() {
   });
 }
 
-// Écouteur global pour la barre de recherche et l'affichage initial
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('searchBL');
   if (searchInput) {
@@ -210,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Affiche la liste des BL dès le chargement de la page
   if (typeof renderSidebar === 'function') {
     renderSidebar();
   }
