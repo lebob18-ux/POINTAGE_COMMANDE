@@ -167,3 +167,8 @@ async function verifierAcces() {
         alert('Accès non validé pour CMD_BL.');
     }
 }
+
+// Lancement automatique au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    initialiserAcces();
+});
