@@ -11,25 +11,34 @@ function esc(s) {
 function renderSidebar() {
   const searchInput = document.getElementById('searchBL');
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  let allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // === FILTRE STRICT PAR ENTREPRISE (SÉCURISÉ) ===
   const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
-  
-  if (monEntreprise && monEntreprise !== 'SNCF' && typeof state !== 'undefined' && state.rows) {
-    // 1. On filtre d'abord toutes les lignes globales de l'état selon l'entreprise connectée
-    const lignesFiltreesParEntreprise = state.rows.filter(r => {
-      const eeLigne = String(r.ee || '').trim().toUpperCase();
-      return eeLigne === monEntreprise;
+
+  // CONSTRUCTION DIRECTE DES BLs DEPUIS STATE.ROWS POUR CONTRÔLER LE FILTRE À 100%
+  let allBLs = [];
+  if (typeof state !== 'undefined' && state.rows && Array.isArray(state.rows)) {
+    // 1. Filtrer les lignes selon l'entreprise (si pas SNCF)
+    const rowsFiltrees = (monEntreprise && monEntreprise !== 'SNCF')
+      ? state.rows.filter(r => String(r.ee || '').trim().toUpperCase() === monEntreprise)
+      : state.rows;
+
+    // 2. Regrouper par BL
+    const blMap = new Map();
+    rowsFiltrees.forEach(r => {
+      const blNum = String(r.bl || '').trim();
+      if (!blNum) return;
+      if (!blMap.has(blNum)) {
+        blMap.set(blNum, { bl: blNum, dms: new Set(), count: 0 });
+      }
+      const item = blMap.get(blNum);
+      item.count++;
+      if (r.dm) item.dms.add(String(r.dm).trim());
     });
-
-    // 2. On extrait la liste exacte des numéros de BL autorisés pour cette entreprise
-    const blsAutorises = new Set(lignesFiltreesParEntreprise.map(r => String(r.bl).trim()));
-
-    // 3. On filtre la liste des BLs globale
-    allBLs = allBLs.filter(b => blsAutorises.has(String(b.bl).trim()));
+    allBLs = Array.from(blMap.values());
+  } else {
+    // Fallback si state.rows n'existe pas encore
+    allBLs = typeof getBLs === 'function' ? getBLs() : [];
   }
-  // ===============================================
   
   // Gestion de la miniature dynamique à côté de la recherche via Supabase (8 chiffres)
   const thumbContainer = document.getElementById('searchThumbContainer');
@@ -161,9 +170,7 @@ function renderPanel() {
     const checked = !!(state && state.checks && state.checks[k]);
     const obsVal  = (state && state.obs && state.obs[k]) || '';
     
-    // Génération d'un ID unique pour charger l'image de cet article via Supabase Storage
     const imgId = `img_article_${Math.random().toString(36).substr(2, 9)}`;
-    // Format à 8 chiffres pour correspondre à vos fichiers (ex: 00000123.jpg)
     const plan8 = String(r.article).trim().padStart(8, '0');
 
     const tr = document.createElement('tr');
@@ -174,7 +181,6 @@ function renderPanel() {
         <input type="checkbox" data-key="${esc(k)}" ${checked ? 'checked' : ''}>
       </td>
       
-      <!-- MINIATURE DEPUIS SUPABASE STORAGE (MIGNATURE_K1) -->
       <td style="width: 55px; padding: 4px 2px; text-align: center; vertical-align: middle;">
         <img id="${esc(imgId)}" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2290%22%3E%3Crect width=%22120%22 height=%2290%22 fill=%22%23eee%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2211%22 fill=%22%23aaa%22%3ELoading...%3C/text%3E%3C/svg%3E" alt="" style="width: 120px; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto;">
         <div style="font-size: 0.6rem; font-weight: bold; color: var(--muted); margin-top: 2px;">Qté:${esc(r.quantite)}</div>
@@ -205,7 +211,6 @@ function renderPanel() {
       </td>
     `;
 
-    // Appel asynchrone Supabase pour récupérer l'URL signée de la miniature à 8 chiffres
     if (window.supabaseClient) {
       window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan8}.jpg`, 60)
         .then(({ data, error }) => {
