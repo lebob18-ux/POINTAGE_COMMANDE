@@ -1,45 +1,48 @@
-/* ================= GESTION DE L'AUTHENTIFICATION & POP-UP ================= */
+/* ================= GESTION DE L'AUTHENTIFICATION & ACCÈS PAR ENTREPRISE ================= */
 
-function checkSNCF() {
-    // Vérifier si un code ou une entreprise est déjà mémorisé
-    const savedCompany = localStorage.getItem('user_company');
-    const savedCode = localStorage.getItem('sncf_auth_code');
+async function checkSNCF() {
+    const emailLocal = localStorage.getItem('pelican_user_email');
     
-    if (savedCode || savedCompany === 'SNCF') {
-        switchTab('admin');
+    if (!emailLocal) {
+        alert("Veuillez d'abord valider votre e-mail d'accès à l'application.");
         return;
     }
 
-    // Sinon, on affiche le pop-up de configuration propre
-    const modal = document.getElementById('companyModal');
-    if (modal) {
-        modal.style.display = 'flex';
+    if (!window.supabaseClient) {
+        alert("Connexion Supabase non disponible.");
+        return;
+    }
+
+    // Interrogation de la table app_bob pour récupérer l'entreprise de l'utilisateur
+    const { data, error } = await window.supabaseClient
+        .from('app_bob')
+        .select('entreprise, cmd_bl')
+        .eq('email', emailLocal)
+        .single();
+
+    if (error || !data) {
+        alert("Impossible de vérifier vos informations d'entreprise.");
+        return;
+    }
+
+    // On vérifie si l'entreprise est bien SNCF (ou autre valeur de référence)
+    if (data.entreprise && data.entreprise.toUpperCase() === 'SNCF' && data.cmd_bl === true) {
+        localStorage.setItem('user_company', 'SNCF');
+        switchTab('admin');
     } else {
-        // Fallback si le modal HTML n'est pas trouvé
-        const code = prompt("Veuillez saisir votre identifiant SNCF (7 chiffres + 1 lettre) :");
-        if (code && code.length >= 8) {
-            localStorage.setItem('sncf_auth_code', code);
-            switchTab('admin');
-        } else {
-            alert("Code invalide.");
-        }
+        alert("Accès restreint : cette section est réservée au personnel SNCF validé.");
     }
 }
 
 // Gestion de l'onglet actif
 function switchTab(tabId) {
-    // Masquer tous les contenus d'onglets
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    
-    // Désactiver tous les boutons de la navbar
     document.querySelectorAll('.nav-tabs .btn').forEach(el => el.classList.remove('active'));
     
-    // Afficher l'onglet sélectionné et activer le bon bouton
     if (tabId === 'commandes') {
         const tabEl = document.getElementById('tab-commandes');
         if (tabEl) tabEl.style.display = 'block';
         
-        // Active le premier bouton de la liste
         const firstBtn = document.querySelector('.nav-tabs .btn');
         if (firstBtn) firstBtn.classList.add('active');
         
@@ -49,12 +52,13 @@ function switchTab(tabId) {
         
         const adminBtn = document.getElementById('adminTabButton');
         if (adminBtn) {
-            adminBtn.style.display = 'inline-block'; // S'assure qu'il est visible
+            adminBtn.style.display = 'inline-block';
             adminBtn.classList.add('active');
         }
     }
 }
-/* ── GESTION DES AUTORISATIONS SUPABASE (auth.js) ──────────────────────────── */
+
+/* ── GESTION DES AUTORISATIONS SUPABASE ────────────────────────────────────── */
 
 async function initialiserAcces() {
     const emailLocal = localStorage.getItem('pelican_user_email');
@@ -62,9 +66,14 @@ async function initialiserAcces() {
     if (!overlay) return;
 
     if (emailLocal) {
-        const valide = await verifierValidationEmail(emailLocal);
-        if (valide) {
+        const utilisateur = await recupererInfosUtilisateur(emailLocal);
+        if (utilisateur && utilisateur.cmd_bl) {
             overlay.style.display = 'none';
+            // Si c'est un utilisateur SNCF, on affiche le bouton d'accès admin
+            if (utilisateur.entreprise && utilisateur.entreprise.toUpperCase() === 'SNCF') {
+                const adminBtn = document.getElementById('adminTabButton');
+                if (adminBtn) adminBtn.style.display = 'inline-block';
+            }
             return;
         }
         overlay.style.display = 'flex';
@@ -84,30 +93,31 @@ async function initialiserAcces() {
     if (attenteVal) attenteVal.style.display = 'none';
 }
 
-async function verifierValidationEmail(email) {
-    if (!window.supabaseClient) return false;
+async function recupererInfosUtilisateur(email) {
+    if (!window.supabaseClient) return null;
     
     const { data, error } = await window.supabaseClient
         .from('app_bob')
-        .select('cmd_bl')
+        .select('cmd_bl, entreprise')
         .eq('email', email);
 
-    if (error || !data || data.length === 0) return false;
-    
-    return data[0].cmd_bl === true;
+    if (error || !data || data.length === 0) return null;
+    return data[0];
 }
 
 async function envoyerDemandeAcces() {
     const prenomEl = document.getElementById('req-prenom');
     const nomEl = document.getElementById('req-nom');
     const emailEl = document.getElementById('req-email');
+    const entrepriseEl = document.getElementById('req-entreprise');
 
     const prenom = prenomEl ? prenomEl.value.trim() : '';
     const nom = nomEl ? nomEl.value.trim() : '';
     const email = emailEl ? emailEl.value.trim() : '';
+    const entreprise = entrepriseEl ? entrepriseEl.value.trim().toUpperCase() : '';
 
-    if (!prenom || !nom || !email) {
-        alert('Veuillez remplir tous les champs.');
+    if (!prenom || !nom || !email || !entreprise) {
+        alert('Veuillez remplir tous les champs, y compris l\'entreprise.');
         return;
     }
     if (!window.supabaseClient) {
@@ -124,6 +134,7 @@ async function envoyerDemandeAcces() {
 
     if (existant) {
         localStorage.setItem('pelican_user_email', email);
+        localStorage.setItem('user_company', entreprise);
         if (existant.cmd_bl) {
             const overlay = document.getElementById('auth-overlay');
             if (overlay) overlay.style.display = 'none';
@@ -138,9 +149,10 @@ async function envoyerDemandeAcces() {
         return;
     }
 
+    // Insertion propre sans la colonne admin, uniquement avec entreprise
     const { error } = await window.supabaseClient
         .from('app_bob')
-        .insert([{ prenom, nom, email, cmd_bl: false }]);
+        .insert([{ prenom, nom, email, entreprise, cmd_bl: false }]);
 
     if (error) {
         alert('Erreur lors de l\'envoi de la demande : ' + error.message);
@@ -148,6 +160,8 @@ async function envoyerDemandeAcces() {
     }
 
     localStorage.setItem('pelican_user_email', email);
+    localStorage.setItem('user_company', entreprise);
+    
     const formDemande = document.getElementById('form-demande');
     const attenteVal = document.getElementById('attente-validation');
     const authMsg = document.getElementById('auth-message');
@@ -159,9 +173,9 @@ async function envoyerDemandeAcces() {
 async function verifierAcces() {
     const email = localStorage.getItem('pelican_user_email');
     if (!email) return;
-    const valide = await verifierValidationEmail(email);
+    const infos = await recupererInfosUtilisateur(email);
     const overlay = document.getElementById('auth-overlay');
-    if (valide) {
+    if (infos && infos.cmd_bl) {
         if (overlay) overlay.style.display = 'none';
     } else {
         alert('Accès non validé pour CMD_BL.');
