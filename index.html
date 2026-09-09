@@ -196,7 +196,14 @@
 <!-- ================= FIN MODALES (EXPORT & CONFIG) ================= -->
 
 <div class="toast" id="toast"></div>
-
+<!-- SDK Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  window.supabaseClient = supabase.createClient(
+    "https://thbqkeugjvsxbryfnzuo.supabase.co",
+    "sb_publishable_2-Ij-nrTPeK6rB-kSD-QTg_b42zNakq"
+  );
+</script>
 <!-- ================= DÉBUT CHARGEMENT DES SCRIPTS ================= -->
 <script src="js/auth.js"></script>
 <script src="js/ui.js"></script>
