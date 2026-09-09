@@ -230,7 +230,125 @@ function renderPanel() {
   });
 }
 
+/* ── GESTION DES AUTORISATIONS SUPABASE ──────────────────────────────────── */
+
+async function initialiserAcces() {
+    const emailLocal = localStorage.getItem('pelican_user_email');
+    const overlay = document.getElementById('auth-overlay');
+    if (!overlay) return;
+
+    if (emailLocal) {
+        const valide = await verifierValidationEmail(emailLocal);
+        if (valide) {
+            overlay.style.display = 'none';
+            return;
+        }
+        overlay.style.display = 'flex';
+        const formDemande = document.getElementById('form-demande');
+        const attenteVal = document.getElementById('attente-validation');
+        const authMsg = document.getElementById('auth-message');
+        if (formDemande) formDemande.style.display = 'none';
+        if (attenteVal) attenteVal.style.display = 'block';
+        if (authMsg) authMsg.textContent = 'Votre accès à CMD_BL est en attente de validation.';
+        return;
+    }
+
+    overlay.style.display = 'flex';
+    const formDemande = document.getElementById('form-demande');
+    const attenteVal = document.getElementById('attente-validation');
+    if (formDemande) formDemande.style.display = 'block';
+    if (attenteVal) attenteVal.style.display = 'none';
+}
+
+async function verifierValidationEmail(email) {
+    if (!window.supabaseClient) return false;
+    
+    const { data, error } = await window.supabaseClient
+        .from('app_bob')
+        .select('cmd_bl')
+        .eq('email', email);
+
+    if (error || !data || data.length === 0) return false;
+    
+    return data[0].cmd_bl === true;
+}
+
+async function envoyerDemandeAcces() {
+    const prenomEl = document.getElementById('req-prenom');
+    const nomEl = document.getElementById('req-nom');
+    const emailEl = document.getElementById('req-email');
+
+    const prenom = prenomEl ? prenomEl.value.trim() : '';
+    const nom = nomEl ? nomEl.value.trim() : '';
+    const email = emailEl ? emailEl.value.trim() : '';
+
+    if (!prenom || !nom || !email) {
+        alert('Veuillez remplir tous les champs.');
+        return;
+    }
+    if (!window.supabaseClient) {
+        alert('Connexion Supabase non disponible.');
+        return;
+    }
+
+    const { data: existantList } = await window.supabaseClient
+        .from('app_bob')
+        .select('id, cmd_bl')
+        .eq('email', email);
+
+    const existant = (existantList && existantList.length > 0) ? existantList[0] : null;
+
+    if (existant) {
+        localStorage.setItem('pelican_user_email', email);
+        if (existant.cmd_bl) {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay) overlay.style.display = 'none';
+            return;
+        }
+        const formDemande = document.getElementById('form-demande');
+        const attenteVal = document.getElementById('attente-validation');
+        const authMsg = document.getElementById('auth-message');
+        if (formDemande) formDemande.style.display = 'none';
+        if (attenteVal) attenteVal.style.display = 'block';
+        if (authMsg) authMsg.textContent = 'Votre e-mail existe déjà, en attente de validation de l\'accès.';
+        return;
+    }
+
+    const { error } = await window.supabaseClient
+        .from('app_bob')
+        .insert([{ prenom, nom, email, cmd_bl: false }]);
+
+    if (error) {
+        alert('Erreur lors de l\'envoi de la demande : ' + error.message);
+        return;
+    }
+
+    localStorage.setItem('pelican_user_email', email);
+    const formDemande = document.getElementById('form-demande');
+    const attenteVal = document.getElementById('attente-validation');
+    const authMsg = document.getElementById('auth-message');
+    if (formDemande) formDemande.style.display = 'none';
+    if (attenteVal) attenteVal.style.display = 'block';
+    if (authMsg) authMsg.textContent = 'Demande envoyée ! En attente de validation par l\'administrateur.';
+}
+
+async function verifierAcces() {
+    const email = localStorage.getItem('pelican_user_email');
+    if (!email) return;
+    const valide = await verifierValidationEmail(email);
+    const overlay = document.getElementById('auth-overlay');
+    if (valide) {
+        if (overlay) overlay.style.display = 'none';
+    } else {
+        alert('Accès non validé pour CMD_BL.');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initialiserAcces === 'function') {
+    initialiserAcces();
+  }
+
   const searchInput = document.getElementById('searchBL');
   if (searchInput) {
     searchInput.addEventListener('input', () => {
