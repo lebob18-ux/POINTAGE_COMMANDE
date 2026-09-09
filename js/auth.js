@@ -25,9 +25,13 @@ async function checkSNCF() {
         return;
     }
 
-    // On vérifie si l'entreprise est bien SNCF (ou autre valeur de référence)
+    // On stocke l'entreprise proprement en local
+    if (data.entreprise) {
+        localStorage.setItem('user_company', data.entreprise.trim().toUpperCase());
+    }
+
+    // On vérifie si l'entreprise est bien SNCF et validée
     if (data.entreprise && data.entreprise.toUpperCase() === 'SNCF' && data.cmd_bl === true) {
-        localStorage.setItem('user_company', 'SNCF');
         switchTab('admin');
     } else {
         alert("Accès restreint : cette section est réservée au personnel SNCF validé.");
@@ -102,7 +106,15 @@ async function recupererInfosUtilisateur(email) {
         .eq('email', email);
 
     if (error || !data || data.length === 0) return null;
-    return data[0];
+    
+    const utilisateur = data[0];
+
+    // STOCKAGE AUTOMATIQUE DE L'ENTREPRISE EN LOCAL
+    if (utilisateur.entreprise) {
+        localStorage.setItem('user_company', utilisateur.entreprise.trim().toUpperCase());
+    }
+
+    return utilisateur;
 }
 
 async function envoyerDemandeAcces() {
@@ -125,13 +137,16 @@ async function envoyerDemandeAcces() {
 
     const { data: existantList } = await window.supabaseClient
         .from('app_bob')
-        .select('id, cmd_bl')
+        .select('id, cmd_bl, entreprise')
         .eq('email', email);
 
     const existant = (existantList && existantList.length > 0) ? existantList[0] : null;
 
     if (existant) {
         localStorage.setItem('pelican_user_email', email);
+        if (existant.entreprise) {
+            localStorage.setItem('user_company', existant.entreprise.trim().toUpperCase());
+        }
         if (existant.cmd_bl) {
             const overlay = document.getElementById('auth-overlay');
             if (overlay) overlay.style.display = 'none';
@@ -146,7 +161,6 @@ async function envoyerDemandeAcces() {
         return;
     }
 
-    // Insertion sans demander l'entreprise (la colonne entreprise dans Supabase sera vide par défaut ou gérée côté admin)
     const { error } = await window.supabaseClient
         .from('app_bob')
         .insert([{ prenom, nom, email, cmd_bl: false }]);
