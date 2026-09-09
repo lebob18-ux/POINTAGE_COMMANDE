@@ -126,15 +126,24 @@ function selectBL(bl) {
 
 function renderPanel() {
   if (!activeBL) return;
-  let rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
   
-  // Filtrage strict des lignes du BL selon l'entreprise connectée
   const monEntreprise = (localStorage.getItem('user_company') || '').trim().toUpperCase();
-  if (monEntreprise && monEntreprise !== 'SNCF') {
-    rows = rows.filter(r => {
-      const eeLigne = String(r.ee || '').trim().toUpperCase();
-      return eeLigne === monEntreprise;
+
+  // Récupération sécurisée et filtrée des lignes associées au BL actif et à l'entreprise
+  let rows = [];
+  if (typeof state !== 'undefined' && state.rows && Array.isArray(state.rows)) {
+    rows = state.rows.filter(r => {
+      const matchBL = String(r.bl || '').trim() === String(activeBL).trim();
+      const matchEE = (monEntreprise === 'SNCF' || !monEntreprise) 
+        ? true 
+        : String(r.ee || '').trim().toUpperCase() === monEntreprise;
+      return matchBL && matchEE;
     });
+  } else {
+    rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
+    if (monEntreprise && monEntreprise !== 'SNCF') {
+      rows = rows.filter(r => String(r.ee || '').trim().toUpperCase() === monEntreprise);
+    }
   }
 
   const prg  = typeof blProgress === 'function' ? blProgress(activeBL) : { done: 0, total: rows.length, pct: 0 };
@@ -159,6 +168,11 @@ function renderPanel() {
   const tbody = document.getElementById('blTbody');
   if (!tbody) return;
   tbody.innerHTML = '';
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--muted);">Aucun article disponible pour cette entreprise dans ce BL.</td></tr>`;
+    return;
+  }
 
   rows.forEach(r => {
     const k       = typeof rowKey === 'function' ? rowKey(r) : r.article;
