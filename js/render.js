@@ -11,7 +11,19 @@ function esc(s) {
 function renderSidebar() {
   const searchInput = document.getElementById('searchBL');
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const allBLs = typeof getBLs === 'function' ? getBLs() : [];
+  let allBLs = typeof getBLs === 'function' ? getBLs() : [];
+  
+  // === FILTRE PAR ENTREPRISE ===
+  const monEntreprise = localStorage.getItem('user_company');
+  if (monEntreprise && monEntreprise !== 'SNCF' && typeof state !== 'undefined' && state.rows) {
+    const blsAutorises = new Set(
+      state.rows
+        .filter(r => r.ee && r.ee.trim().toUpperCase() === monEntreprise)
+        .map(r => r.bl)
+    );
+    allBLs = allBLs.filter(b => blsAutorises.has(b.bl));
+  }
+  // =============================
   
   // Gestion de la miniature dynamique à côté de la recherche via Supabase (8 chiffres)
   const thumbContainer = document.getElementById('searchThumbContainer');
@@ -103,7 +115,15 @@ function selectBL(bl) {
 
 function renderPanel() {
   if (!activeBL) return;
-  const rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
+  let rows = typeof getRowsForBL === 'function' ? getRowsForBL(activeBL) : [];
+  
+  // === FILTRE PAR ENTREPRISE SUR LES LIGNES DU BL ===
+  const monEntreprise = localStorage.getItem('user_company');
+  if (monEntreprise && monEntreprise !== 'SNCF') {
+    rows = rows.filter(r => r.ee && r.ee.trim().toUpperCase() === monEntreprise);
+  }
+  // ==================================================
+
   const prg  = typeof blProgress === 'function' ? blProgress(activeBL) : { done: 0, total: rows.length, pct: 0 };
   const dms  = [...new Set(rows.map(r => r.dm))].join(', ');
 
