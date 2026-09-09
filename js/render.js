@@ -13,14 +13,14 @@ function renderSidebar() {
   const filter = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const allBLs = typeof getBLs === 'function' ? getBLs() : [];
   
-  // Gestion de la miniature dynamique à côté de la recherche via Supabase
+  // Gestion de la miniature dynamique à côté de la recherche via Supabase (8 chiffres)
   const thumbContainer = document.getElementById('searchThumbContainer');
   const thumbImg = document.getElementById('searchThumbImg');
   
   if (filter.length >= 2 && thumbImg) {
-    const plan6 = filter.padStart(6, '0');
+    const plan8 = filter.padStart(8, '0');
     if (window.supabaseClient) {
-      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan6}.jpg`, 60)
+      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan8}.jpg`, 60)
         .then(({ data, error }) => {
           if (data && !error) {
             thumbImg.src = data.signedUrl;
@@ -134,7 +134,8 @@ function renderPanel() {
     
     // Génération d'un ID unique pour charger l'image de cet article via Supabase Storage
     const imgId = `img_article_${Math.random().toString(36).substr(2, 9)}`;
-    const plan6 = String(r.article).trim().padStart(6, '0');
+    // Format à 8 chiffres pour correspondre à vos fichiers (ex: 00000123.jpg)
+    const plan8 = String(r.article).trim().padStart(8, '0');
 
     const tr = document.createElement('tr');
     if (checked) tr.classList.add('validated');
@@ -175,9 +176,9 @@ function renderPanel() {
       </td>
     `;
 
-    // Appel asynchrone Supabase pour récupérer l'URL signée de la miniature
+    // Appel asynchrone Supabase pour récupérer l'URL signée de la miniature à 8 chiffres
     if (window.supabaseClient) {
-      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan6}.jpg`, 60)
+      window.supabaseClient.storage.from(SUPABASE_BUCKET_MINIATURES).createSignedUrl(`${plan8}.jpg`, 60)
         .then(({ data, error }) => {
           const elImg = document.getElementById(imgId);
           if (elImg && data && !error) {
