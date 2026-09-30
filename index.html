@@ -7,9 +7,38 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f1117">
-  
+
   <!-- Librairie SheetJS pour lire Excel (.xlsx, .xlsm, .xls) et CSV côté client -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Styles de la recherche (BL / DM / symbole / intitulé) -->
+  <style>
+    .search-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .search-wrap { position: relative; flex: 1; }
+    .search-wrap .search-box { width: 100%; margin-bottom: 0; padding-right: 32px; box-sizing: border-box; }
+    #clearSearch {
+      display: none; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; color: var(--muted, #888);
+      font-size: 1rem; line-height: 1; padding: 6px 8px; cursor: pointer;
+    }
+    .only-match {
+      display: flex; align-items: center; gap: 6px; margin-top: 6px;
+      font-size: 0.7rem; color: var(--muted, #888); cursor: pointer;
+    }
+    .search-hint { font-size: 0.65rem; color: var(--muted, #888); margin-top: 3px; line-height: 1.3; }
+
+    /* Résultats par symbole / intitulé dans la liste des BL */
+    .bl-hits { margin-top: 5px; border-top: 1px dashed var(--border, #2a2f3d); padding-top: 4px; }
+    .bl-hit { font-size: 0.7rem; color: var(--warn, #f0a500); line-height: 1.25; margin-bottom: 2px; word-break: break-word; }
+    .bl-hit b { font-weight: 700; }
+    .bl-hit-q { font-weight: 700; white-space: nowrap; }
+    .bl-hit.more { color: var(--muted, #888); font-style: italic; }
+
+    /* Lignes trouvées dans le tableau du BL */
+    tr.sym-match td { background: rgba(240, 165, 0, 0.18) !important; }
+    tr.sym-match { outline: 2px solid var(--warn, #f0a500); outline-offset: -2px; }
+    tr.sym-hidden { display: none; }
+  </style>
 </head>
 <body>
 <!-- ÉCRAN DE VERROUILLAGE / DEMANDE D'ACCÈS -->
@@ -17,7 +46,7 @@
     <div style="background: white; padding: 30px; border-radius: 8px; width: 400px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
         <h2 style="margin-top: 0; color: #333;">Accès à l'application</h2>
         <p id="auth-message" style="color: #666; font-size: 14px; margin-bottom: 20px;">Veuillez renseigner vos informations pour demander l'accès.</p>
-        
+
         <!-- Formulaire de demande -->
         <div id="form-demande">
             <input type="text" id="req-prenom" placeholder="Votre Prénom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br>
@@ -37,7 +66,7 @@
 <!-- ================= DÉBUT HEADER / NAVIGATION ================= -->
 <header>
   <div class="logo">📦 Suivi Commandes <span>SNCF Réseau</span></div>
-  
+
   <!-- Navigation par onglets -->
   <div class="nav-tabs" style="display: flex; gap: 10px; margin-left: 20px;">
     <button class="btn btn-sm btn-ghost active" onclick="switchTab('commandes')">Suivi BL</button>
@@ -60,12 +89,22 @@
     <aside class="sidebar">
       <div class="sidebar-head">
         <h2>Bons de livraison</h2>
-        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-          <input class="search-box" type="text" id="searchBL" placeholder="Rechercher BL, DM, Article…" style="flex: 1; margin-bottom: 0;">
+
+        <!-- Recherche : BL, DM, symbole (article), intitulé, chantier, EE -->
+        <div class="search-row">
+          <div class="search-wrap">
+            <input class="search-box" type="text" id="searchBL" placeholder="BL, DM, symbole, intitulé…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+            <button id="clearSearch" type="button" title="Effacer la recherche">✕</button>
+          </div>
           <div id="searchThumbContainer" style="display: none; flex-shrink: 0;">
             <img id="searchThumbImg" src="" alt="" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
           </div>
         </div>
+        <label class="only-match">
+          <input type="checkbox" id="onlyMatch"> Afficher seulement les lignes trouvées
+        </label>
+        <div class="search-hint">Plusieurs mots = tous doivent correspondre (ex : griffe 12345)</div>
+
         <div class="sidebar-stats" id="sidebarStats"></div>
       </div>
       <div class="bl-list" id="blList"></div>
@@ -115,7 +154,7 @@
 <!-- ================= DÉBUT ONGLET 2 : IMPORT & SUIVI TERRAIN (CUSTOM) ================= -->
 <div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 1100px; margin: 0 auto;">
   <h2>📋 Suivi & Validation - Liste Importée</h2>
-  
+
   <!-- Zone de sélection de fichier -->
   <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
     <div>
@@ -133,7 +172,7 @@
   <!-- Barre d'outils du tableau -->
   <div id="customToolbar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; flex-wrap: wrap;">
     <input type="text" id="searchPelican" placeholder="Filtrer dans la liste..." oninput="renderCustomList()" style="flex-grow: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
-    
+
     <!-- Barre de progression -->
     <div style="display: flex; align-items: center; gap: 10px; background: var(--surface2); padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border);">
       <div style="width: 100px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
@@ -224,27 +263,33 @@ window.addEventListener('load', function() {
     var savedCompany = localStorage.getItem('user_company');
     var savedCode = localStorage.getItem('sncf_auth_code');
     var adminBtn = document.getElementById('adminTabButton');
-    
+
     if ((savedCompany === 'SNCF' || savedCode) && adminBtn) {
         adminBtn.style.display = 'inline-block';
     }
 });
 
-document.getElementById('btnSaveCompany').addEventListener('click', () => {
-    const val = document.getElementById('inputCompanyName').value.trim().toUpperCase();
-    if (val === 'SNCF') {
-        localStorage.setItem('user_company', 'SNCF');
-        document.getElementById('companyModal').style.display = 'none';
-        
-        const adminBtn = document.getElementById('adminTabButton');
-        if (adminBtn) adminBtn.style.display = 'inline-block';
-        
-        checkSNCF();
-    } else if (val) {
-        localStorage.setItem('user_company', val);
-        document.getElementById('companyModal').style.display = 'none';
-    }
-});
+// Protégé : ces éléments (btnSaveCompany, companyModal) peuvent ne pas exister dans la page
+var _btnSaveCompany = document.getElementById('btnSaveCompany');
+if (_btnSaveCompany) {
+    _btnSaveCompany.addEventListener('click', function() {
+        var input = document.getElementById('inputCompanyName');
+        var val = input ? input.value.trim().toUpperCase() : '';
+        var modal = document.getElementById('companyModal');
+        if (val === 'SNCF') {
+            localStorage.setItem('user_company', 'SNCF');
+            if (modal) modal.style.display = 'none';
+
+            var adminBtn = document.getElementById('adminTabButton');
+            if (adminBtn) adminBtn.style.display = 'inline-block';
+
+            if (typeof checkSNCF === 'function') checkSNCF();
+        } else if (val) {
+            localStorage.setItem('user_company', val);
+            if (modal) modal.style.display = 'none';
+        }
+    });
+}
 </script>
 <!-- ================= FIN CHARGEMENT DES SCRIPTS ================= -->
 
