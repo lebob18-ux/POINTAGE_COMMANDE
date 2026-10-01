@@ -1,134 +1,224 @@
-/* ── CHARGEMENT LISTE DEPUIS GITHUB OU LOCALSTORAGE ──────────────────────── */
-// L'agent ne modifie jamais la liste — seul le gestionnaire met à jour
-// data/liste_commandes.csv dans le dépôt GitHub.
+// ===== Liste de suivi terrain stockée sur Supabase =====
+const LISTE_TABLE = 'suivi_liste';
+let customList = [];
 
-const DATA_FILE = 'data/liste_commandes.csv';
+function sbL() { return window.supabaseClient; }
 
-async function chargerListeGitHub() {
-  setLoadStatus('loading', '⏳ Chargement de la liste…');
-  try {
-    const resp = await fetch(DATA_FILE + '?v=' + Date.now());
-    if (!resp.ok) {
-      throw new Error(resp.status === 404 ? 'Fichier introuvable' : `Erreur ${resp.status}`);
+function escH(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function setImportStatus(msg) {
+  var el = document.getElementById('importStatusInfo');
+  if (el) el.textContent = msg || '';
+}
+
+// ---------- Chargement depuis Supabase ----------
+async function loadCustomList() {
+  setImportStatus('Chargement de la liste…');
+  var all = [], from = 0, step = 1000;
+  while (true) {
+    var res = await sbL().from(LISTE_TABLE).select('*')
+      .order('id', { ascending: true }).range(from, from + step - 1);
+    if (res.error) {
+      setImportStatus('Erreur de chargement : ' + res.error.message);
+      return;
     }
-    const raw = await resp.text();
-    const rows = parseCSV(raw);
-    if (!rows) { setLoadStatus('warn', '⚠ Fichier vide ou format non reconnu'); return; }
+    all = all.concat(res.data);
+    if (res.data.length < step) break;
+    from += step;
+  }
+  customList = all;
+  setImportStatus(all.length + ' ligne(s) en base.');
+  renderCustomList();
+}
 
-    // Sauvegarde en LocalStorage pour sécuriser le mobile
-    localStorage.setItem('cached_csv_rows', JSON.stringify(rows));
+// ---------- Lecture du fichier ----------
+function findCol(headers, names) {
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || '').toLowerCase().trim();
+    for (var j = 0; j < names.length; j++) {
+      if (h.indexOf(names[j]) !== -1) return i;
+    }
+  }
+  return -1;
+}
 
-    processLoadedRows(rows);
-    return rows;
-  } catch (e) {
-    console.warn("Fetch GitHub impossible, tentative de lecture du cache local...", e);
-    
-    // Filet de secours : Lecture depuis le cache du téléphone si le fetch échoue
-    const cachedData = localStorage.getItem('cached_csv_rows');
-    if (cachedData) {
-      try {
-        const rows = JSON.parse(cachedData);
-        processLoadedRows(rows);
-        const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-        setLoadStatus('ok', `✔ ${rows.length} lignes chargées depuis le cache — ${h}`);
-        return rows;
-      } catch (err) {
-        setLoadStatus('warn', '⚠ Erreur lors de la lecture du cache local');
-      }
+function rowsToItems(rows) {
+  if (!rows.length) return [];
+  var headers = rows[0];
+  var iSym = findCol(headers, ['symbole', 'réf', 'ref', 'article']);
+  var iPlan = findCol(headers, ['plan']);
+  var iDes = findCol(headers, ['désignation', 'designation', 'intitulé', 'intitule', 'libellé', 'libelle', 'détail', 'detail']);
+  var iObs = findCol(headers, ['observation']);
+  if (iSym === -1) iSym = 0;
+  if (iDes === -1) iDes = 1;
+  var items = [];
+  for (var r = 1; r < rows.length; r++) {
+    var row = rows[r];
+    if (!row || !row.some(function (c) { return String(c || '').trim() !== ''; })) continue;
+    items.push({
+      symbole: String(row[iSym] == null ? '' : row[iSym]).trim(),
+      plan: iPlan > -1 ? String(row[iPlan] == null ? '' : row[iPlan]).trim() : '',
+      designation: String(row[iDes] == null ? '' : row[iDes]).trim(),
+      observation: iObs > -1 ? String(row[iObs] == null ? '' : row[iObs]).trim() : '',
+      valide: false
+    });
+  }
+  return items;
+}
+
+function readFileRows(file) {
+  return new Promise(function (resolve, reject) {
+    var ext = file.name.split('.').pop().toLowerCase();
+    var reader = new FileReader();
+    reader.onerror = function () { reject(new Error('Lecture du fichier impossible')); };
+    if (ext === 'csv' || ext === 'txt') {
+      reader.onload = function (e) {
+        var lines = String(e.target.result).split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+        resolve(lines.map(function (l) { return l.split(';').map(function (c) { return c.replace(/^"|"$/g, ''); }); }));
+      };
+      reader.readAsText(file, 'UTF-8');
     } else {
-      setLoadStatus('warn', '⚠ Impossible de charger la liste (vérifiez votre connexion)');
+      reader.onload = function (e) {
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        resolve(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }));
+      };
+      reader.readAsArrayBuffer(file);
     }
+  });
+}
+
+// ---------- Import = remplace la liste en base ----------
+async function handleCustomFileImport(event) {
+  var file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  try {
+    var items = rowsToItems(await readFileRows(file));
+    if (!items.length) { alert('Aucune ligne exploitable dans ce fichier.'); return; }
+    if (customList.length &&
+        !confirm('Remplacer les ' + customList.length + ' lignes en base par les ' + items.length + ' du fichier ?\n(Les validations et observations actuelles seront perdues.)')) return;
+
+    setImportStatus('Envoi vers Supabase…');
+    var del = await sbL().from(LISTE_TABLE).delete().neq('id', 0);
+    if (del.error) throw del.error;
+
+    for (var i = 0; i < items.length; i += 500) {
+      var ins = await sbL().from(LISTE_TABLE).insert(items.slice(i, i + 500));
+      if (ins.error) throw ins.error;
+    }
+    await loadCustomList();
+    if (typeof showToast === 'function') showToast('Liste importée : ' + items.length + ' lignes');
+  } catch (err) {
+    setImportStatus('Erreur : ' + (err.message || err));
+    alert('Erreur : ' + (err.message || err));
   }
 }
 
-function processLoadedRows(rows) {
-  state.rows = rows;
-  const keys = new Set(rows.map(rowKey));
-  Object.keys(state.checks).forEach(k => { if (!keys.has(k)) delete state.checks[k]; });
-  Object.keys(state.obs).forEach(k => { if (!keys.has(k)) delete state.obs[k]; });
-  saveState();
-
-  const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  setLoadStatus('ok', `✔ ${rows.length} lignes chargées — ${h}`);
-  
-  // Force l'affichage immédiat de la liste dans la sidebar
-  if (typeof renderSidebar === 'function') renderSidebar();
+// ---------- Mises à jour d'une ligne ----------
+async function updateCustomRow(id, fields) {
+  fields.updated_at = new Date().toISOString();
+  var res = await sbL().from(LISTE_TABLE).update(fields).eq('id', id);
+  if (res.error) alert('Erreur de sauvegarde : ' + res.error.message);
 }
 
-function setLoadStatus(type, msg) {
-  const el = document.getElementById('loadStatus');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'load-status load-' + type;
-  el.style.display = 'block';
-  if (type === 'ok') setTimeout(() => { if (el.textContent === msg) el.style.display = 'none'; }, 4000);
+function toggleCustomValide(id, checked) {
+  var it = customList.find(function (x) { return x.id === id; });
+  if (it) it.valide = checked;
+  updateCustomRow(id, { valide: checked });
+  updateCustomProgress();
+  var tr = document.getElementById('crow-' + id);
+  if (tr) tr.style.background = checked ? 'rgba(40,167,69,0.18)' : '';
 }
 
-/* ── PARSING CSV / TSV ───────────────────────────────────────────────────── */
-function detectSeparator(line) {
-  if (line.includes('\t')) return '\t';
-  if ((line.match(/;/g) || []).length >= 2) return ';';
-  return ',';
+function saveCustomObs(id, value) {
+  var it = customList.find(function (x) { return x.id === id; });
+  if (it) it.observation = value;
+  updateCustomRow(id, { observation: value });
 }
 
-function normalizeHeader(h) {
-  return h.trim().toUpperCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Supprime les accents (ex: Réception -> RECEPTION)
-    .replace(/[°\s\-_]/g, '');
+// ---------- Affichage ----------
+function updateCustomProgress() {
+  var total = customList.length;
+  var done = customList.filter(function (x) { return x.valide; }).length;
+  var pct = total ? Math.round(done * 100 / total) : 0;
+  var bar = document.getElementById('customProgBar');
+  var txt = document.getElementById('customProgTxt');
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = done + ' / ' + total + ' (' + pct + '%)';
 }
 
-function matchColumn(headers) {
-  const ALIASES = {
-    DM:        ['NDM','DM','NUMDM','NUMERODM'],
-    LIGNE:     ['LIGNE','LINE','LIG'],
-    BL:        ['NBL','BL','NUMBL'],
-    CHANTIER:  ['CHANTIER','SITE','AFFAIRE','OPERATION','OTP'],
-    ARTICLE:   ['ARTICLE','ART','CODE','CODEART','REFERENCE','REF'],
-    INTITULE:  ['INTITULE','LIBELLE','DESIGNATION','DESCRIPTION'],
-    QUANTITE:  ['QUANTITE','QTE','QTY','QUANTITY'],
-    EE:        ['EE','ENTREPRISE','STE','SOCIETE'],
-    RECEPTION: ['RECEPTION','STATUTRECEPTION','REC','VALIDE'],
-  };
-  const idx = { DM:-1, LIGNE:-1, BL:-1, CHANTIER:-1, ARTICLE:-1, INTITULE:-1, QUANTITE:-1, EE:-1, RECEPTION:-1 };
-  
-  headers.forEach((h, i) => {
-    const norm = normalizeHeader(h);
-    Object.keys(idx).forEach(k => {
-      if (idx[k] === -1 && ALIASES[k].some(a => norm.includes(a) || a.includes(norm))) idx[k] = i;
-    });
+function renderCustomList() {
+  var tbody = document.getElementById('customTbody');
+  var toolbar = document.getElementById('customToolbar');
+  if (!tbody) return;
+
+  if (!customList.length) {
+    if (toolbar) toolbar.style.display = 'none';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Liste vide. Importez un fichier pour l\'alimenter.</td></tr>';
+    return;
+  }
+  if (toolbar) toolbar.style.display = 'flex';
+
+  var q = (document.getElementById('searchPelican').value || '').toLowerCase().trim();
+  var words = q ? q.split(/\s+/) : [];
+  var html = '';
+  customList.forEach(function (it) {
+    var hay = (it.symbole + ' ' + it.plan + ' ' + it.designation + ' ' + it.observation).toLowerCase();
+    if (!words.every(function (w) { return hay.indexOf(w) !== -1; })) return;
+    html += '<tr id="crow-' + it.id + '" style="border-bottom:1px solid var(--border);' +
+      (it.valide ? 'background:rgba(40,167,69,0.18);' : '') + '">' +
+      '<td style="text-align:center;padding:8px;"><input type="checkbox" ' + (it.valide ? 'checked' : '') +
+      ' onchange="toggleCustomValide(' + it.id + ', this.checked)"></td>' +
+      '<td></td>' +
+      '<td style="padding:8px;font-weight:bold;">' + escH(it.symbole) + '</td>' +
+      '<td style="padding:8px;">' + escH(it.plan) + '</td>' +
+      '<td style="padding:8px;">' + escH(it.designation) + '</td>' +
+      '<td style="padding:8px;"><input type="text" value="' + escH(it.observation) + '" placeholder="Observation…" ' +
+      'style="width:100%;padding:6px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);box-sizing:border-box;" ' +
+      'onchange="saveCustomObs(' + it.id + ', this.value)"></td></tr>';
   });
-  
-  return idx;
+  tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">Aucun résultat.</td></tr>';
+  updateCustomProgress();
 }
 
-function parseCSV(raw) {
-  const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return null;
-  
-  const sep = detectSeparator(lines[0]);
-  const regex = new RegExp(`(?<=${sep}|^|\\s)("(?:[^"]|"")*"|[^${sep}]*)(?=${sep}|$)`, 'g');
-  
-  const idx = matchColumn(lines[0].split(sep));
-  const get = (parts, k) => (idx[k] !== -1 && parts[idx[k]] ? parts[idx[k]].trim().replace(/^["']|["']$/g, '').replace(/""/g, '"') : '');
-  
-  const rows = [];
-  lines.slice(1).forEach(line => {
-    const parts = line.match(regex).filter(p => p !== sep && p !== "");
-    
-    const bl = get(parts,'BL'), dm = get(parts,'DM');
-    if (!bl && !dm) return;
-    
-    rows.push({ 
-      dm, 
-      ligne: get(parts,'LIGNE'), 
-      bl, 
-      chantier: get(parts,'CHANTIER'), 
-      article: get(parts,'ARTICLE'), 
-      intitule: get(parts,'INTITULE'), 
-      quantite: get(parts,'QUANTITE'),
-      ee: get(parts,'EE').toUpperCase(),
-      reception: get(parts,'RECEPTION')
-    });
+// ---------- Exports ----------
+function exportCustomCsv() {
+  var lines = ['Valide;Symbole;Plan;Designation;Observation'];
+  customList.forEach(function (it) {
+    var c = function (v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; };
+    lines.push([it.valide ? 'OUI' : 'NON', c(it.symbole), c(it.plan), c(it.designation), c(it.observation)].join(';'));
   });
-  return rows.length ? rows : null;
+  var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'liste_suivi.csv';
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
 }
+
+function exportCustomPdf() {
+  var rows = customList.map(function (it) {
+    return '<tr><td>' + (it.valide ? '✔' : '') + '</td><td>' + escH(it.symbole) + '</td><td>' + escH(it.plan) +
+      '</td><td>' + escH(it.designation) + '</td><td>' + escH(it.observation) + '</td></tr>';
+  }).join('');
+  var w = window.open('', '_blank');
+  if (!w) { alert('Autorisez les popups pour imprimer.'); return; }
+  w.document.write('<html><head><title>Liste de suivi</title><style>' +
+    'body{font-family:Arial,sans-serif;font-size:11px}table{width:100%;border-collapse:collapse}' +
+    'th,td{border:1px solid #999;padding:4px;text-align:left}th{background:#eee}</style></head><body>' +
+    '<h3>Liste de suivi</h3><table><thead><tr><th>✓</th><th>Symbole</th><th>Plan</th><th>Désignation</th><th>Observation</th></tr></thead><tbody>' +
+    rows + '</tbody></table></body></html>');
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+// ---------- Chargement automatique ----------
+window.addEventListener('load', function () {
+  loadCustomList();
+});
