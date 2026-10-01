@@ -124,11 +124,11 @@ if (inputSearch) {
     });
 }
 
-/* ACTUALISER depuis GitHub (Sécurisé au cas où le bouton n'existe pas) */
+/* ACTUALISER depuis Supabase (Sécurisé au cas où le bouton n'existe pas) */
 const btnReload = document.getElementById('btnReload');
 if (btnReload) {
   btnReload.addEventListener('click', async () => {
-    await chargerListeGitHub();
+    await chargerListe();
     renderSidebar();
     if (activeBL && state.rows.some(r => r.bl === activeBL)) {
       renderPanel();
@@ -154,9 +154,9 @@ function selectBLSurMobile(numBl) {
 /* ── INIT ─────────────────────────────────────────────────────────────────── */
 if (typeof loadState === 'function') loadState();
 
-// Charger la liste depuis GitHub au démarrage SANS pré-sélectionner de BL
-if (typeof chargerListeGitHub === 'function') {
-  chargerListeGitHub().then(() => {
+// Charger la liste depuis Supabase au démarrage SANS pré-sélectionner de BL
+if (typeof chargerListe === 'function') {
+  chargerListe().then(() => {
     if (typeof renderSidebar === 'function') renderSidebar();
     activeBL = null;
     const blPanel = document.getElementById('blPanel');

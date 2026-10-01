@@ -225,7 +225,7 @@ function renderSidebar() {
 
   if (!results.length) {
     list.innerHTML = `<div style="color:var(--muted);font-size:.8rem;padding:10px 4px">
-      ${hasFilter ? 'Aucun résultat' : 'Aucun BL — importez une liste'}
+      ${hasFilter ? 'Aucun résultat' : 'Aucun BL à afficher'}
     </div>`;
     return;
   }

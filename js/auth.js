@@ -187,6 +187,7 @@ async function verifierAcces() {
     const overlay = document.getElementById('auth-overlay');
     if (infos && infos.cmd_bl) {
         if (overlay) overlay.style.display = 'none';
+        location.reload();
     } else {
         alert('Accès non validé pour CMD_BL.');
     }
