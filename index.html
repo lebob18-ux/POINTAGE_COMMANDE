@@ -75,6 +75,7 @@
   </div>
 
   <div class="header-actions">
+    <span id="syncStatus" title="Synchronisation" style="align-self:center;font-size:.8rem;font-weight:700;color:var(--ok);min-width:28px;text-align:center;">✓</span>
     <button class="btn btn-ghost btn-sm" onclick="location.reload()" title="Recharger l'application">↺ Actualiser</button>
   </div>
 </header>
@@ -151,15 +152,16 @@
 </div>
 <!-- ================= FIN ONGLET 1 : SUIVI COMMANDES (BL) ================= -->
 
-<!-- ================= DÉBUT ONGLET 2 : IMPORT & SUIVI TERRAIN (CUSTOM) ================= -->
-<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 1100px; margin: 0 auto;">
-  <h2>📋 Suivi & Validation - Liste Importée</h2>
+<!-- ================= DÉBUT ONGLET 2 : MISE À JOUR DE LA BASE (ADMIN SNCF) ================= -->
+<div id="tab-admin" class="tab-content" style="display:none; padding: 20px; max-width: 900px; margin: 0 auto;">
+  <h2>📋 Base des commandes</h2>
 
-  <!-- Zone de sélection de fichier -->
+  <div id="adminSummary" style="font-size: 0.85rem; margin: 10px 0 15px; line-height: 1.6;"></div>
+
   <div style="background: var(--surface2, #1e222d); border: 1px dashed var(--border, #2a2f3d); padding: 15px; border-radius: var(--radius, 6px); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
     <div>
-      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Importer un nouveau fichier de suivi</div>
-      <div style="font-size: 0.75rem; color: var(--muted);">Formats : CSV, TXT (séparateur ;), XLS, XLSX, XLSM</div>
+      <div style="font-weight: bold; font-size: 0.9rem; color: var(--text);">Compléter la base avec un fichier</div>
+      <div style="font-size: 0.75rem; color: var(--muted);">Excel (.xlsx, .xlsm, .xls) ou CSV. Ajoute les nouvelles lignes, met à jour les existantes, conserve le pointage.</div>
     </div>
     <div>
       <input type="file" id="importCustomFile" accept=".csv, .txt, .xls, .xlsx, .xlsm" style="display: none;" onchange="handleCustomFileImport(event)">
@@ -168,48 +170,9 @@
   </div>
 
   <div id="importStatusInfo" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;"></div>
-
-  <!-- Barre d'outils du tableau -->
-  <div id="customToolbar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 15px; gap: 10px; flex-wrap: wrap;">
-    <input type="text" id="searchPelican" placeholder="Filtrer dans la liste..." oninput="renderCustomList()" style="flex-grow: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--text);">
-
-    <!-- Barre de progression -->
-    <div style="display: flex; align-items: center; gap: 10px; background: var(--surface2); padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border);">
-      <div style="width: 100px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
-        <div id="customProgBar" style="width: 0%; height: 100%; background: #28a745; transition: width 0.3s;"></div>
-      </div>
-      <span id="customProgTxt" style="font-size: 0.75rem; font-weight: bold;">0 / 0 (0%)</span>
-    </div>
-
-    <!-- Boutons d'export -->
-    <div style="display: flex; gap: 6px;">
-      <button class="btn btn-sm btn-ghost" onclick="exportCustomCsv()">📄 CSV</button>
-      <button class="btn btn-sm btn-warn" onclick="exportCustomPdf()">🖨 Imprimer / PDF</button>
-    </div>
-  </div>
-
-  <!-- Tableau interactif type BL -->
-  <div class="table-wrap" style="background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);">
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: left;">
-          <th style="width: 40px; text-align: center; padding: 10px;">✓</th>
-          <th style="width: 50px; text-align: center;">Photo</th>
-          <th style="width: 90px; padding: 8px;">Symbole / Réf</th>
-          <th style="width: 70px; padding: 8px;">Plan</th>
-          <th style="padding: 8px;">Détails de l'article</th>
-          <th style="width: 250px; padding: 8px;">Observations</th>
-        </tr>
-      </thead>
-      <tbody id="customTbody">
-        <tr>
-          <td colspan="6" style="text-align: center; padding: 30px; color: var(--muted);">Aucun fichier importé. Veuillez sélectionner un fichier ci-dessus.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="importPreview"></div>
 </div>
-<!-- ================= FIN ONGLET 2 : IMPORT & SUIVI TERRAIN (CUSTOM) ================= -->
+<!-- ================= FIN ONGLET 2 : MISE À JOUR DE LA BASE ================= -->
 
 <!-- ================= DÉBUT MODALES (EXPORT & CONFIG) ================= -->
 <!-- EXPORT MODAL -->

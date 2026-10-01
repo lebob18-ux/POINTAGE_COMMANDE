@@ -1,64 +1,47 @@
 # 📦 Suivi Commandes — SNCF Réseau
 
-Outil de réception des bons de livraison pour agents de terrain.  
-Fonctionne dans le navigateur (Android / desktop), aucune installation.
+Réception des bons de livraison par les agents de terrain (smartphone / PC).
+Les lignes de commande **et** le pointage sont dans Supabase (table `commandes_lignes`).
 
-## Principe de fonctionnement
-
-```
-Gestionnaire                          Agents terrain
-─────────────                         ──────────────
-Met à jour                            Ouvrent l'appli
-data/liste_commandes.csv    →→→→→→→   ↺ Actualiser
-sur GitHub                            Cochent les lignes reçues
-                                      Saisissent les observations
-                                      Exportent PDF / Excel
-```
-
-- **La liste** vient uniquement de `data/liste_commandes.csv` dans le dépôt
-- **Les coches et observations** sont sauvegardées localement sur le téléphone de l'agent
-- Quand le gestionnaire met à jour le CSV et que l'agent clique ↺ Actualiser :
-  - Les nouvelles lignes apparaissent
-  - Les lignes supprimées disparaissent
-  - Les coches/obs sur les lignes conservées **sont préservées**
-
-## Structure du projet
+## Fonctionnement
 
 ```
-suivi-commandes/
-├── index.html
-├── manifest.json
-├── data/
-│   └── liste_commandes.csv   ← À METTRE À JOUR ICI
-├── css/
-│   └── style.css
-└── js/
-    ├── state.js
-    ├── render.js
-    ├── import.js
-    ├── export.js
-    └── app.js
+Admin SNCF                              Agents terrain
+──────────                              ──────────────
+Onglet « Import & Liste »               Ouvrent l'appli (smartphone)
+Choisit un Excel / CSV          →→→→→   Voient les BL de leur EE
+Aperçu : +nouvelles / ~modifiées        Cochent les lignes reçues
+Valide                                  Saisissent les observations
+                                        → enregistré en base, visible de tous
 ```
 
-## Format du fichier CSV
+- **Complément de liste** : nouvelles lignes ajoutées, lignes existantes mises à jour,
+  pointage conservé, aucune ligne supprimée.
+- **Pointage** : enregistré à chaque coche / observation. Sans réseau, il est gardé sur le
+  téléphone (badge ⏳ en haut) et part dès que le réseau revient (badge ✓).
+- Les agents voient uniquement les lignes de leur EE ; SNCF voit tout.
 
-Séparateur `;` ou tabulation. En-tête obligatoire.
+## Mise en place (une seule fois)
+
+1. Supabase → SQL Editor → exécuter `supabase.sql`
+2. Déployer ce dossier sur GitHub Pages
+3. Se connecter en SNCF → onglet **Import & Liste** → importer `data/liste_commandes.csv`
+   (le fichier de départ, 681 lignes déjà reçues sont reprises comme reçues)
+
+## Colonnes reconnues (Excel ou CSV, séparateur `,` `;` ou tabulation)
+
+`N° DM · LIGNE · N°BL · Article · Quantité · CHANTIER · Date livraison · INTITULER · EE · RECEPTION`
+
+Seules `N°BL` et `Article` sont obligatoires.
+
+## Structure
 
 ```
-N°DM;LIGNE;N°BL;ARTICLE;INTITULE;QUANTITE
-DM_112233;1;BL-2025-042;CAT-FIL-001;Fil caténaire Cu107 mm²;500
+index.html · manifest.json · supabase.sql
+css/style.css
+js/auth.js          accès par e-mail (table app_bob)
+js/state.js         données, pointage, synchro Supabase, file d'attente hors ligne
+js/import.js        chargement de la liste depuis Supabase
+js/import_custom.js import Excel/CSV = complément de la base (admin)
+js/render.js · export.js · app.js · ui.js
 ```
-
-Pour exporter depuis Excel : **Fichier → Enregistrer sous → CSV (séparateur : point-virgule)**
-
-## Déploiement GitHub Pages
-
-1. Créer un dépôt `suivi-commandes`
-2. Pousser ce dossier à la racine
-3. **Settings → Pages → Source : `main` / `/ (root)`**
-4. URL : `https://<compte>.github.io/suivi-commandes/`
-
-## Mise à jour de la liste
-
-1. Modifier `data/liste_commandes.csv` sur GitHub (édition directe ou commit)
-2. Les agents cliquent **↺ Actualiser** — la liste se recharge automatiquement
